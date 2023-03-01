@@ -268,7 +268,7 @@ export function isHostComponentStandalone(lView: LView): boolean {
  *
  * @param lView An `LView` that represents a current component that is being rendered.
  */
-function getTemplateLocationDetails(lView: LView): string {
+export function getTemplateLocationDetails(lView: LView): string {
   !ngDevMode && throwError('Must never be called in production mode');
 
   const hostComponentDef = getDeclarationComponentDef(lView);
@@ -282,7 +282,7 @@ function getTemplateLocationDetails(lView: LView): string {
  * that the `CommonModule` should also be included.
  */
 export const KNOWN_CONTROL_FLOW_DIRECTIVES = new Map([
-  ['ngIf', 'NgIf'], ['ngFor', 'NgForOf'], ['ngSwitchCase', 'NgSwitchCase'],
+  ['ngIf', 'NgIf'], ['ngFor', 'NgFor'], ['ngSwitchCase', 'NgSwitchCase'],
   ['ngSwitchDefault', 'NgSwitchDefault']
 ]);
 /**

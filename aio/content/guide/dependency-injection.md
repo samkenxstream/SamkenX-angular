@@ -34,7 +34,7 @@ class HeroListComponent {}
 
 When you register a provider at the component level, you get a new instance of the service with each new instance of that component.
 
-* At the NgModule level, using the `providers` field of the `@NgModule` decorator. In this scenario, the `HeroService` is available to all components, directives and pipes declared in this NgModule. For example:
+* At the NgModule level, using the `providers` field of the `@NgModule` decorator. In this scenario, the `HeroService` is available to all components, directives, and pipes declared in this NgModule. For example:
 
 <code-example language="typescript">
 @NgModule({
@@ -45,6 +45,7 @@ class HeroListModule {}
 </code-example>
 
 When you register a provider with a specific NgModule, the same instance of a service is available to all components in that NgModule.
+To understand all edge-cases, see [Hierarchical injectors](guide/hierarchical-dependency-injection).
 
 * At the application root level, which allows injecting it into other classes in the application. This can be done by adding the `providedIn: 'root'` field to the `@Injectable` decorator:
 
@@ -57,7 +58,7 @@ class HeroService {}
 
 When you provide the service at the root level, Angular creates a single, shared instance of the `HeroService` and injects it into any class that asks for it. Registering the provider in the `@Injectable` metadata also allows Angular to optimize an app by removing the service from the compiled application if it isn't used, a process known as tree-shaking.
 
-## Providing dependency
+## Injecting a dependency
 
 The most common way to inject a dependency is to declare it in a class constructor. When Angular creates a new instance of a component, directive, or pipe class, it determines which services or other dependencies that class needs by looking at the constructor parameter types. For example, if the `HeroListComponent` needs the `HeroService`, the constructor can look like this:
 

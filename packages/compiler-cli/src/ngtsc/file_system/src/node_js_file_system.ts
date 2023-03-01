@@ -6,7 +6,7 @@
  * found in the LICENSE file at https://angular.io/license
  */
 /// <reference types="node" />
-import * as fs from 'fs';
+import fs from 'fs';
 import module from 'module';
 import * as p from 'path';
 import {fileURLToPath} from 'url';
@@ -54,12 +54,10 @@ export class NodeJSPathManipulation implements PathManipulation {
   }
 }
 
-// CommonJS/ESM interop for determining the current file name and containing
-// directory. These paths are needed for detecting whether the file system
-// is case sensitive, or for finding the TypeScript default libraries.
-// TODO(devversion): Simplify this in the future if devmode uses ESM as well.
+// G3-ESM-MARKER: G3 uses CommonJS, but externally everything in ESM.
+// CommonJS/ESM interop for determining the current file name and containing dir.
 const isCommonJS = typeof __filename !== 'undefined';
-const currentFileUrl = isCommonJS ? null : __ESM_IMPORT_META_URL__;
+const currentFileUrl = isCommonJS ? null : import.meta.url;
 const currentFileName = isCommonJS ? __filename : fileURLToPath(currentFileUrl!);
 
 /**
@@ -97,7 +95,7 @@ export class NodeJSReadonlyFileSystem extends NodeJSPathManipulation implements 
     return this.resolve(fs.realpathSync(path));
   }
   getDefaultLibLocation(): AbsoluteFsPath {
-    // TODO(devversion): Once devmode output uses ESM, we can simplify this.
+    // G3-ESM-MARKER: G3 uses CommonJS, but externally everything in ESM.
     const requireFn = isCommonJS ? require : module.createRequire(currentFileUrl!);
     return this.resolve(requireFn.resolve('typescript'), '..');
   }
@@ -123,29 +121,10 @@ export class NodeJSFileSystem extends NodeJSReadonlyFileSystem implements FileSy
     fs.renameSync(from, to);
   }
   ensureDir(path: AbsoluteFsPath): void {
-    const parents: AbsoluteFsPath[] = [];
-    while (!this.isRoot(path) && !this.exists(path)) {
-      parents.push(path);
-      path = this.dirname(path);
-    }
-    while (parents.length) {
-      this.safeMkdir(parents.pop()!);
-    }
+    fs.mkdirSync(path, {recursive: true});
   }
   removeDeep(path: AbsoluteFsPath): void {
     fs.rmdirSync(path, {recursive: true});
-  }
-
-  private safeMkdir(path: AbsoluteFsPath): void {
-    try {
-      fs.mkdirSync(path);
-    } catch (err) {
-      // Ignore the error, if the path already exists and points to a directory.
-      // Re-throw otherwise.
-      if (!this.exists(path) || !this.stat(path).isDirectory()) {
-        throw err;
-      }
-    }
   }
 }
 

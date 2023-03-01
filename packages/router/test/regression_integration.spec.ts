@@ -6,14 +6,16 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {CommonModule, Location} from '@angular/common';
-import {SpyLocation} from '@angular/common/testing';
+import {CommonModule, HashLocationStrategy, Location, LocationStrategy} from '@angular/common';
+import {provideLocationMocks, SpyLocation} from '@angular/common/testing';
 import {ChangeDetectionStrategy, ChangeDetectorRef, Component, Injectable, NgModule, TemplateRef, Type, ViewChild, ViewContainerRef} from '@angular/core';
 import {ComponentFixture, fakeAsync, TestBed, tick} from '@angular/core/testing';
-import {ChildrenOutletContexts, Resolve, Router} from '@angular/router';
+import {ChildrenOutletContexts, Resolve, Router, RouterOutlet} from '@angular/router';
 import {RouterTestingModule} from '@angular/router/testing';
 import {of} from 'rxjs';
 import {delay, mapTo} from 'rxjs/operators';
+
+import {provideRouter} from '../src/provide_router';
 
 describe('Integration', () => {
   describe('routerLinkActive', () => {
@@ -121,18 +123,18 @@ describe('Integration', () => {
         `
          })
          class ComponentWithRouterLink {
-           // TODO(issue/24571): remove '!'.
-           @ViewChild(TemplateRef, {static: true}) templateRef!: TemplateRef<any>;
-           // TODO(issue/24571): remove '!'.
+           @ViewChild(TemplateRef, {static: true}) templateRef?: TemplateRef<unknown>;
            @ViewChild('container', {read: ViewContainerRef, static: true})
-           container!: ViewContainerRef;
+           container?: ViewContainerRef;
 
            addLink() {
-             this.container.createEmbeddedView(this.templateRef, {$implicit: '/simple'});
+             if (this.templateRef) {
+               this.container?.createEmbeddedView(this.templateRef, {$implicit: '/simple'});
+             }
            }
 
            removeLink() {
-             this.container.clear();
+             this.container?.clear();
            }
          }
 
@@ -298,14 +300,19 @@ describe('Integration', () => {
       class OneCmp {
       }
       TestBed.configureTestingModule({
-        imports: [RouterTestingModule.withRoutes(
-            [
-              {path: '', component: SimpleCmp},
-              {path: 'one', component: OneCmp, resolve: {x: DelayedResolve}}
-            ],
-            {useHash: true})],
         declarations: [SimpleCmp, RootCmp, OneCmp],
-        providers: [DelayedResolve],
+        imports: [RouterOutlet],
+        providers: [
+          DelayedResolve,
+          provideLocationMocks(),
+          provideRouter(
+              [
+                {path: '', component: SimpleCmp},
+                {path: 'one', component: OneCmp, resolve: {x: DelayedResolve}}
+              ],
+              ),
+          {provide: LocationStrategy, useClass: HashLocationStrategy},
+        ],
       });
 
       router = TestBed.inject(Router);

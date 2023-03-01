@@ -8,6 +8,7 @@
 
 import {InjectionToken} from '@angular/core';
 
+import {OnSameUrlNavigation} from './models';
 import {UrlSerializer, UrlTree} from './url_tree';
 
 const NG_DEV_MODE = typeof ngDevMode === 'undefined' || !!ngDevMode;
@@ -20,6 +21,7 @@ const NG_DEV_MODE = typeof ngDevMode === 'undefined' || !!ngDevMode;
  * the exception.
  *
  * @publicApi
+ * @deprecated Subscribe to the `Router` events and watch for `NavigationError` instead.
  */
 export type ErrorHandler = (error: any) => any;
 
@@ -45,62 +47,84 @@ export type ErrorHandler = (error: any) => any;
 export type InitialNavigation = 'disabled'|'enabledBlocking'|'enabledNonBlocking';
 
 /**
- * A set of configuration options for a router module, provided in the
- * `forRoot()` method.
- *
- * @see `forRoot()`
- *
+ * Extra configuration options that can be used with the `withRouterConfig` function.
  *
  * @publicApi
  */
-export interface ExtraOptions {
+export interface RouterConfigOptions {
   /**
-   * When true, log all internal navigation events to the console.
-   * Use for debugging.
+   * Configures how the Router attempts to restore state when a navigation is cancelled.
+   *
+   * 'replace' - Always uses `location.replaceState` to set the browser state to the state of the
+   * router before the navigation started. This means that if the URL of the browser is updated
+   * _before_ the navigation is canceled, the Router will simply replace the item in history rather
+   * than trying to restore to the previous location in the session history. This happens most
+   * frequently with `urlUpdateStrategy: 'eager'` and navigations with the browser back/forward
+   * buttons.
+   *
+   * 'computed' - Will attempt to return to the same index in the session history that corresponds
+   * to the Angular route when the navigation gets cancelled. For example, if the browser back
+   * button is clicked and the navigation is cancelled, the Router will trigger a forward navigation
+   * and vice versa.
+   *
+   * Note: the 'computed' option is incompatible with any `UrlHandlingStrategy` which only
+   * handles a portion of the URL because the history restoration navigates to the previous place in
+   * the browser history rather than simply resetting a portion of the URL.
+   *
+   * The default value is `replace` when not set.
    */
-  enableTracing?: boolean;
+  canceledNavigationResolution?: 'replace'|'computed';
 
   /**
-   * When true, enable the location strategy that uses the URL fragment
-   * instead of the history API.
+   * Configures the default for handling a navigation request to the current URL.
+   *
+   * If unset, the `Router` will use `'ignore'`.
+   *
+   * @see `OnSameUrlNavigation`
    */
-  useHash?: boolean;
+  onSameUrlNavigation?: OnSameUrlNavigation;
 
   /**
-   * One of `enabled`, `enabledBlocking`, `enabledNonBlocking` or `disabled`.
-   * When set to `enabled` or `enabledBlocking`, the initial navigation starts before the root
-   * component is created. The bootstrap is blocked until the initial navigation is complete. This
-   * value is required for [server-side rendering](guide/universal) to work. When set to
-   * `enabledNonBlocking`, the initial navigation starts after the root component has been created.
-   * The bootstrap is not blocked on the completion of the initial navigation. When set to
-   * `disabled`, the initial navigation is not performed. The location listener is set up before the
-   * root component gets created. Use if there is a reason to have more control over when the router
-   * starts its initial navigation due to some complex initialization logic.
-   */
-  initialNavigation?: InitialNavigation;
-
-  /**
-   * A custom error handler for failed navigations.
-   * If the handler returns a value, the navigation Promise is resolved with this value.
-   * If the handler throws an exception, the navigation Promise is rejected with the exception.
+   * Defines how the router merges parameters, data, and resolved data from parent to child
+   * routes. By default ('emptyOnly'), inherits parent parameters only for
+   * path-less or component-less routes.
+   *
+   * Set to 'always' to enable unconditional inheritance of parent parameters.
+   *
+   * Note that when dealing with matrix parameters, "parent" refers to the parent `Route`
+   * config which does not necessarily mean the "URL segment to the left". When the `Route` `path`
+   * contains multiple segments, the matrix parameters must appear on the last segment. For example,
+   * matrix parameters for `{path: 'a/b', component: MyComp}` should appear as `a/b;foo=bar` and not
+   * `a;foo=bar/b`.
    *
    */
-  errorHandler?: ErrorHandler;
+  paramsInheritanceStrategy?: 'emptyOnly'|'always';
 
   /**
-   * Configures a preloading strategy.
-   * One of `PreloadAllModules` or `NoPreloading` (the default).
+   * Defines when the router updates the browser URL. By default ('deferred'),
+   * update after successful navigation.
+   * Set to 'eager' if prefer to update the URL at the beginning of navigation.
+   * Updating the URL early allows you to handle a failure of navigation by
+   * showing an error message with the URL that failed.
    */
-  preloadingStrategy?: any;
+  urlUpdateStrategy?: 'deferred'|'eager';
+}
 
+/**
+ * Configuration options for the scrolling feature which can be used with `withInMemoryScrolling`
+ * function.
+ *
+ * @publicApi
+ */
+export interface InMemoryScrollingOptions {
   /**
-   * Define what the router should do if it receives a navigation request to the current URL.
-   * Default is `ignore`, which causes the router ignores the navigation.
-   * This can disable features such as a "refresh" button.
-   * Use this option to configure the behavior when navigating to the
-   * current URL. Default is 'ignore'.
+   * When set to 'enabled', scrolls to the anchor element when the URL has a fragment.
+   * Anchor scrolling is disabled by default.
+   *
+   * Anchor scrolling does not happen on 'popstate'. Instead, we restore the position
+   * that we stored or scroll to the top.
    */
-  onSameUrlNavigation?: 'reload'|'ignore';
+  anchorScrolling?: 'disabled'|'enabled';
 
   /**
    * Configures if the scroll position needs to be restored when navigating back.
@@ -137,15 +161,57 @@ export interface ExtraOptions {
    * ```
    */
   scrollPositionRestoration?: 'disabled'|'enabled'|'top';
+}
+
+/**
+ * A set of configuration options for a router module, provided in the
+ * `forRoot()` method.
+ *
+ * @see `forRoot()`
+ *
+ *
+ * @publicApi
+ */
+export interface ExtraOptions extends InMemoryScrollingOptions, RouterConfigOptions {
+  /**
+   * When true, log all internal navigation events to the console.
+   * Use for debugging.
+   */
+  enableTracing?: boolean;
 
   /**
-   * When set to 'enabled', scrolls to the anchor element when the URL has a fragment.
-   * Anchor scrolling is disabled by default.
-   *
-   * Anchor scrolling does not happen on 'popstate'. Instead, we restore the position
-   * that we stored or scroll to the top.
+   * When true, enable the location strategy that uses the URL fragment
+   * instead of the history API.
    */
-  anchorScrolling?: 'disabled'|'enabled';
+  useHash?: boolean;
+
+  /**
+   * One of `enabled`, `enabledBlocking`, `enabledNonBlocking` or `disabled`.
+   * When set to `enabled` or `enabledBlocking`, the initial navigation starts before the root
+   * component is created. The bootstrap is blocked until the initial navigation is complete. This
+   * value is required for [server-side rendering](guide/universal) to work. When set to
+   * `enabledNonBlocking`, the initial navigation starts after the root component has been created.
+   * The bootstrap is not blocked on the completion of the initial navigation. When set to
+   * `disabled`, the initial navigation is not performed. The location listener is set up before the
+   * root component gets created. Use if there is a reason to have more control over when the router
+   * starts its initial navigation due to some complex initialization logic.
+   */
+  initialNavigation?: InitialNavigation;
+
+  /**
+   * A custom error handler for failed navigations.
+   * If the handler returns a value, the navigation Promise is resolved with this value.
+   * If the handler throws an exception, the navigation Promise is rejected with the exception.
+   *
+   * @deprecated Subscribe to the `Router` events and watch for `NavigationError` instead.
+   */
+  errorHandler?: (error: any) => any;
+
+  /**
+   * Configures a preloading strategy.
+   * One of `PreloadAllModules` or `NoPreloading` (the default).
+   */
+  preloadingStrategy?: any;
 
   /**
    * Configures the scroll offset the router will use when scrolling to an element.
@@ -158,22 +224,6 @@ export interface ExtraOptions {
   scrollOffset?: [number, number]|(() => [number, number]);
 
   /**
-   * Defines how the router merges parameters, data, and resolved data from parent to child
-   * routes. By default ('emptyOnly'), inherits parent parameters only for
-   * path-less or component-less routes.
-   *
-   * Set to 'always' to enable unconditional inheritance of parent parameters.
-   *
-   * Note that when dealing with matrix parameters, "parent" refers to the parent `Route`
-   * config which does not necessarily mean the "URL segment to the left". When the `Route` `path`
-   * contains multiple segments, the matrix parameters must appear on the last segment. For example,
-   * matrix parameters for `{path: 'a/b', component: MyComp}` should appear as `a/b;foo=bar` and not
-   * `a;foo=bar/b`.
-   *
-   */
-  paramsInheritanceStrategy?: 'emptyOnly'|'always';
-
-  /**
    * A custom handler for malformed URI errors. The handler is invoked when `encodedURI` contains
    * invalid character sequences.
    * The default implementation is to redirect to the root URL, dropping
@@ -182,77 +232,11 @@ export interface ExtraOptions {
    * - `'URIError'` - Error thrown when parsing a bad URL.
    * - `'UrlSerializer'` - UrlSerializer that’s configured with the router.
    * - `'url'` -  The malformed URL that caused the URIError
+   *
+   * @deprecated URI parsing errors should be handled in the `UrlSerializer` instead.
    * */
   malformedUriErrorHandler?:
       (error: URIError, urlSerializer: UrlSerializer, url: string) => UrlTree;
-
-  /**
-   * Defines when the router updates the browser URL. By default ('deferred'),
-   * update after successful navigation.
-   * Set to 'eager' if prefer to update the URL at the beginning of navigation.
-   * Updating the URL early allows you to handle a failure of navigation by
-   * showing an error message with the URL that failed.
-   */
-  urlUpdateStrategy?: 'deferred'|'eager';
-
-  /**
-   * Enables a bug fix that corrects relative link resolution in components with empty paths.
-   * Example:
-   *
-   * ```
-   * const routes = [
-   *   {
-   *     path: '',
-   *     component: ContainerComponent,
-   *     children: [
-   *       { path: 'a', component: AComponent },
-   *       { path: 'b', component: BComponent },
-   *     ]
-   *   }
-   * ];
-   * ```
-   *
-   * From the `ContainerComponent`, you should be able to navigate to `AComponent` using
-   * the following `routerLink`, but it will not work if `relativeLinkResolution` is set
-   * to `'legacy'`:
-   *
-   * `<a [routerLink]="['./a']">Link to A</a>`
-   *
-   * However, this will work:
-   *
-   * `<a [routerLink]="['../a']">Link to A</a>`
-   *
-   * In other words, you're required to use `../` rather than `./` when the relative link
-   * resolution is set to `'legacy'`.
-   *
-   * The default in v11 is `corrected`.
-   *
-   * @deprecated
-   */
-  relativeLinkResolution?: 'legacy'|'corrected';
-
-  /**
-   * Configures how the Router attempts to restore state when a navigation is cancelled.
-   *
-   * 'replace' - Always uses `location.replaceState` to set the browser state to the state of the
-   * router before the navigation started. This means that if the URL of the browser is updated
-   * _before_ the navigation is canceled, the Router will simply replace the item in history rather
-   * than trying to restore to the previous location in the session history. This happens most
-   * frequently with `urlUpdateStrategy: 'eager'` and navigations with the browser back/forward
-   * buttons.
-   *
-   * 'computed' - Will attempt to return to the same index in the session history that corresponds
-   * to the Angular route when the navigation gets cancelled. For example, if the browser back
-   * button is clicked and the navigation is cancelled, the Router will trigger a forward navigation
-   * and vice versa.
-   *
-   * Note: the 'computed' option is incompatible with any `UrlHandlingStrategy` which only
-   * handles a portion of the URL because the history restoration navigates to the previous place in
-   * the browser history rather than simply resetting a portion of the URL.
-   *
-   * The default value is `replace` when not set.
-   */
-  canceledNavigationResolution?: 'replace'|'computed';
 }
 
 /**

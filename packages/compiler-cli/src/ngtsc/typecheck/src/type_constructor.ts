@@ -12,7 +12,7 @@ import {ClassDeclaration, ReflectionHost} from '../../reflection';
 import {TypeCtorMetadata} from '../api';
 
 import {checkIfGenericTypeBoundsCanBeEmitted, ReferenceEmitEnvironment} from './tcb_util';
-import {tsCreateTypeQueryForCoercedInput, tsUpdateTypeParameterDeclaration} from './ts_util';
+import {tsCreateTypeQueryForCoercedInput} from './ts_util';
 
 export function generateTypeCtorDeclarationFn(
     node: ClassDeclaration<ts.ClassDeclaration>, meta: TypeCtorMetadata, nodeTypeRef: ts.EntityName,
@@ -42,7 +42,6 @@ export function generateTypeCtorDeclarationFn(
         /* declarationList */ declList);
   } else {
     return ts.factory.createFunctionDeclaration(
-        /* decorators */ undefined,
         /* modifiers */[ts.factory.createModifier(ts.SyntaxKind.DeclareKeyword)],
         /* asteriskToken */ undefined,
         /* name */ meta.fnName,
@@ -111,7 +110,6 @@ export function generateInlineTypeCtor(
 
   // Create the type constructor method declaration.
   return ts.factory.createMethodDeclaration(
-      /* decorators */ undefined,
       /* modifiers */[ts.factory.createModifier(ts.SyntaxKind.StaticKeyword)],
       /* asteriskToken */ undefined,
       /* name */ meta.fnName,
@@ -173,7 +171,6 @@ function constructTypeCtorParameter(
 
   // Create the 'init' parameter itself.
   return ts.factory.createParameterDeclaration(
-      /* decorators */ undefined,
       /* modifiers */ undefined,
       /* dotDotDotToken */ undefined,
       /* name */ 'init',
@@ -244,8 +241,8 @@ function typeParametersWithDefaultTypes(params: ReadonlyArray<ts.TypeParameterDe
 
   return params.map(param => {
     if (param.default === undefined) {
-      return tsUpdateTypeParameterDeclaration(
-          param, param.name, param.constraint,
+      return ts.factory.updateTypeParameterDeclaration(
+          param, param.modifiers, param.name, param.constraint,
           ts.factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword));
     } else {
       return param;

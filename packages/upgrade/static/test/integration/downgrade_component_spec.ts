@@ -405,10 +405,9 @@ withEachNg1Version(() => {
          class Ng2Component implements OnChanges {
            ngOnChangesCount = 0;
            firstChangesCount = 0;
-           // TODO(issue/24571): remove '!'.
-           initialValue!: string;
-           // TODO(issue/24571): remove '!'.
-           @Input() foo!: string;
+           @Input() foo: string = '';
+           initialValue: string = this.foo;
+
 
            ngOnChanges(changes: SimpleChanges) {
              this.ngOnChangesCount++;
@@ -913,6 +912,33 @@ withEachNg1Version(() => {
                              'unexpectedly specified.\n' +
                              'You should not specify a value for \'downgradedModule\', unless you are ' +
                              'downgrading more than one Angular module (via \'downgradeModule()\').'));
+       }));
+  });
+
+  describe('standalone', () => {
+    beforeEach(() => destroyPlatform());
+    afterEach(() => destroyPlatform());
+
+    it('should downgrade a standalone component using NgModule APIs', waitForAsync(() => {
+         @Component({selector: 'ng2', standalone: true, template: 'Hi from Angular!'})
+         class Ng2Component {
+         }
+
+         const ng1Module = angular.module_('ng1', []).directive(
+             'ng2', downgradeComponent({component: Ng2Component}));
+
+
+         @NgModule({
+           imports: [BrowserModule, UpgradeModule, Ng2Component],
+         })
+         class Ng2Module {
+           ngDoBootstrap() {}
+         }
+
+         const element = html('<ng2></ng2>');
+         bootstrap(platformBrowserDynamic(), Ng2Module, element, ng1Module).then(() => {
+           expect(element.textContent).toBe('Hi from Angular!');
+         });
        }));
   });
 });

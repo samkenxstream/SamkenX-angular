@@ -14,8 +14,10 @@
 import {
   Component,
   Directive,
+  EnvironmentInjector,
   InjectFlags,
   InjectionToken,
+  InjectOptions,
   Injector,
   NgModule,
   NgZone,
@@ -23,6 +25,7 @@ import {
   PlatformRef,
   ProviderToken,
   Type,
+  ɵconvertToBitFlags as convertToBitFlags,
   ɵflushModuleScopingQueueAsMuchAsPossible as flushModuleScopingQueueAsMuchAsPossible,
   ɵgetUnknownElementStrictMode as getUnknownElementStrictMode,
   ɵgetUnknownPropertyStrictMode as getUnknownPropertyStrictMode,
@@ -87,13 +90,27 @@ export interface TestBed {
 
   compileComponents(): Promise<any>;
 
+  inject<T>(token: ProviderToken<T>, notFoundValue: undefined, options: InjectOptions&{
+    optional?: false
+  }): T;
+  inject<T>(token: ProviderToken<T>, notFoundValue: null|undefined, options: InjectOptions): T|null;
+  inject<T>(token: ProviderToken<T>, notFoundValue?: T, options?: InjectOptions): T;
+  /** @deprecated use object-based flags (`InjectOptions`) instead. */
   inject<T>(token: ProviderToken<T>, notFoundValue?: T, flags?: InjectFlags): T;
+  /** @deprecated use object-based flags (`InjectOptions`) instead. */
   inject<T>(token: ProviderToken<T>, notFoundValue: null, flags?: InjectFlags): T|null;
 
   /** @deprecated from v9.0.0 use TestBed.inject */
   get<T>(token: ProviderToken<T>, notFoundValue?: T, flags?: InjectFlags): any;
   /** @deprecated from v9.0.0 use TestBed.inject */
   get(token: any, notFoundValue?: any): any;
+
+  /**
+   * Runs the given function in the `EnvironmentInjector` context of `TestBed`.
+   *
+   * @see EnvironmentInjector#runInContext
+   */
+  runInInjectionContext<T>(fn: () => T): T;
 
   execute(tokens: any[], fn: Function, context?: any): any;
 
@@ -110,13 +127,12 @@ export interface TestBed {
   /**
    * Overwrites all providers for the given token with the given provider definition.
    */
-  overrideProvider(token: any, provider: {
-    useFactory: Function,
-    deps: any[],
-  }): TestBed;
-  overrideProvider(token: any, provider: {useValue: any;}): TestBed;
-  overrideProvider(token: any, provider: {useFactory?: Function, useValue?: any, deps?: any[]}):
+  overrideProvider(token: any, provider: {useFactory: Function, deps: any[], multi?: boolean}):
       TestBed;
+  overrideProvider(token: any, provider: {useValue: any, multi?: boolean}): TestBed;
+  overrideProvider(
+      token: any,
+      provider: {useFactory?: Function, useValue?: any, deps?: any[], multi?: boolean}): TestBed;
 
   overrideTemplateUsingTestingModule(component: Type<any>, template: string): TestBed;
 
@@ -290,10 +306,19 @@ export class TestBedImpl implements TestBed {
     return TestBedImpl.INSTANCE.overrideProvider(token, provider);
   }
 
+  static inject<T>(token: ProviderToken<T>, notFoundValue: undefined, options: InjectOptions&{
+    optional?: false
+  }): T;
+  static inject<T>(token: ProviderToken<T>, notFoundValue: null|undefined, options: InjectOptions):
+      T|null;
+  static inject<T>(token: ProviderToken<T>, notFoundValue?: T, options?: InjectOptions): T;
+  /** @deprecated use object-based flags (`InjectOptions`) instead. */
   static inject<T>(token: ProviderToken<T>, notFoundValue?: T, flags?: InjectFlags): T;
+  /** @deprecated use object-based flags (`InjectOptions`) instead. */
   static inject<T>(token: ProviderToken<T>, notFoundValue: null, flags?: InjectFlags): T|null;
-  static inject<T>(token: ProviderToken<T>, notFoundValue?: T|null, flags?: InjectFlags): T|null {
-    return TestBedImpl.INSTANCE.inject(token, notFoundValue, flags);
+  static inject<T>(
+      token: ProviderToken<T>, notFoundValue?: T|null, flags?: InjectFlags|InjectOptions): T|null {
+    return TestBedImpl.INSTANCE.inject(token, notFoundValue, convertToBitFlags(flags));
   }
 
   /** @deprecated from v9.0.0 use TestBed.inject */
@@ -305,6 +330,15 @@ export class TestBedImpl implements TestBed {
       token: any, notFoundValue: any = Injector.THROW_IF_NOT_FOUND,
       flags: InjectFlags = InjectFlags.Default): any {
     return TestBedImpl.INSTANCE.inject(token, notFoundValue, flags);
+  }
+
+  /**
+   * Runs the given function in the `EnvironmentInjector` context of `TestBed`.
+   *
+   * @see EnvironmentInjector#runInContext
+   */
+  static runInInjectionContext<T>(fn: () => T): T {
+    return TestBedImpl.INSTANCE.runInInjectionContext(fn);
   }
 
   static createComponent<T>(component: Type<T>): ComponentFixture<T> {
@@ -468,14 +502,22 @@ export class TestBedImpl implements TestBed {
     return this.compiler.compileComponents();
   }
 
+  inject<T>(token: ProviderToken<T>, notFoundValue: undefined, options: InjectOptions&{
+    optional: true
+  }): T|null;
+  inject<T>(token: ProviderToken<T>, notFoundValue?: T, options?: InjectOptions): T;
+  inject<T>(token: ProviderToken<T>, notFoundValue: null, options?: InjectOptions): T|null;
+  /** @deprecated use object-based flags (`InjectOptions`) instead. */
   inject<T>(token: ProviderToken<T>, notFoundValue?: T, flags?: InjectFlags): T;
+  /** @deprecated use object-based flags (`InjectOptions`) instead. */
   inject<T>(token: ProviderToken<T>, notFoundValue: null, flags?: InjectFlags): T|null;
-  inject<T>(token: ProviderToken<T>, notFoundValue?: T|null, flags?: InjectFlags): T|null {
+  inject<T>(token: ProviderToken<T>, notFoundValue?: T|null, flags?: InjectFlags|InjectOptions): T
+      |null {
     if (token as unknown === TestBed) {
       return this as any;
     }
     const UNDEFINED = {} as unknown as T;
-    const result = this.testModuleRef.injector.get(token, UNDEFINED, flags);
+    const result = this.testModuleRef.injector.get(token, UNDEFINED, convertToBitFlags(flags));
     return result === UNDEFINED ? this.compiler.injector.get(token, notFoundValue, flags) as any :
                                   result;
   }
@@ -488,6 +530,10 @@ export class TestBedImpl implements TestBed {
   get(token: any, notFoundValue: any = Injector.THROW_IF_NOT_FOUND,
       flags: InjectFlags = InjectFlags.Default): any {
     return this.inject(token, notFoundValue, flags);
+  }
+
+  runInInjectionContext<T>(fn: () => T): T {
+    return this.inject(EnvironmentInjector).runInContext(fn);
   }
 
   execute(tokens: any[], fn: Function, context?: any): any {

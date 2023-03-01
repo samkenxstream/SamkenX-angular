@@ -5,8 +5,9 @@
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-import * as path from 'path';
-import * as shx from 'shelljs';
+import {runfiles} from '@bazel/runfiles';
+import path from 'path';
+import shx from 'shelljs';
 
 function checkInSubFolder(subFolder: string, testFn: Function) {
   shx.cd(subFolder);
@@ -16,7 +17,7 @@ function checkInSubFolder(subFolder: string, testFn: Function) {
 
 describe('Zone.js npm_package', () => {
   beforeEach(() => {
-    shx.cd(path.dirname(require.resolve('angular/packages/zone.js/npm_package/package.json')));
+    shx.cd(path.dirname(runfiles.resolve('angular/packages/zone.js/npm_package/package.json')));
   });
   describe('misc root files', () => {
     describe('README.md', () => {
@@ -115,8 +116,6 @@ describe('Zone.js npm_package', () => {
     describe('plugins folder check', () => {
       it('should contain all plugin folders in ./plugins', () => {
         const expected = [
-          'async-stack-tagging',
-          'async-stack-tagging.min',
           'async-test',
           'async-test.min',
           'fake-async-test',
@@ -197,8 +196,6 @@ describe('Zone.js npm_package', () => {
     describe('bundles file list', () => {
       it('should contain all files', () => {
         const expected = [
-          'async-stack-tagging.js',
-          'async-stack-tagging.min.js',
           'async-test.js',
           'async-test.min.js',
           'fake-async-test.js',
@@ -293,8 +290,6 @@ describe('Zone.js npm_package', () => {
       it('should contain all original folders in /dist', () => {
         const list = shx.ls('./dist').stdout.split('\n').sort().slice(1);
         const expected = [
-          'async-stack-tagging.js',
-          'async-stack-tagging.min.js',
           'async-test.js',
           'async-test.min.js',
           'fake-async-test.js',

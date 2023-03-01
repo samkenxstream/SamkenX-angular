@@ -6,12 +6,10 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {Location, LocationStrategy} from '@angular/common';
-import {MockLocationStrategy, SpyLocation} from '@angular/common/testing';
-import {Compiler, Injector, ModuleWithProviders, NgModule, Optional} from '@angular/core';
-import {ChildrenOutletContexts, ExtraOptions, NoPreloading, provideRoutes, Route, Router, ROUTER_CONFIGURATION, RouteReuseStrategy, RouterModule, ROUTES, Routes, TitleStrategy, UrlHandlingStrategy, UrlSerializer, ɵassignExtraOptionsToRouter as assignExtraOptionsToRouter, ɵflatten as flatten, ɵprovidePreloading as providePreloading, ɵROUTER_PROVIDERS as ROUTER_PROVIDERS} from '@angular/router';
-
-import {EXTRA_ROUTER_TESTING_PROVIDERS} from './extra_router_testing_providers';
+import {Location} from '@angular/common';
+import {provideLocationMocks} from '@angular/common/testing';
+import {Compiler, inject, Injector, ModuleWithProviders, NgModule} from '@angular/core';
+import {ChildrenOutletContexts, ExtraOptions, NoPreloading, Route, Router, ROUTER_CONFIGURATION, RouteReuseStrategy, RouterModule, ROUTES, Routes, TitleStrategy, UrlHandlingStrategy, UrlSerializer, ɵflatten as flatten, ɵROUTER_PROVIDERS as ROUTER_PROVIDERS, ɵwithPreloading as withPreloading} from '@angular/router';
 
 function isUrlHandlingStrategy(opts: ExtraOptions|
                                UrlHandlingStrategy): opts is UrlHandlingStrategy {
@@ -20,60 +18,72 @@ function isUrlHandlingStrategy(opts: ExtraOptions|
   return 'shouldProcessUrl' in opts;
 }
 
-/**
- * Router setup factory function used for testing. Only used internally to keep the factory that's
- * marked as publicApi cleaner (i.e. not having _both_ `TitleStrategy` and `DefaultTitleStrategy`).
- */
-export function setupTestingRouterInternal(
-    urlSerializer: UrlSerializer,
-    contexts: ChildrenOutletContexts,
-    location: Location,
-    compiler: Compiler,
-    injector: Injector,
-    routes: Route[][],
-    titleStrategy: TitleStrategy,
-    opts?: ExtraOptions|UrlHandlingStrategy,
-    urlHandlingStrategy?: UrlHandlingStrategy,
-    routeReuseStrategy?: RouteReuseStrategy,
-) {
-  return setupTestingRouter(
-      urlSerializer, contexts, location, compiler, injector, routes, opts, urlHandlingStrategy,
-      routeReuseStrategy, titleStrategy);
+function throwInvalidConfigError(parameter: string): never {
+  throw new Error(
+      `Parameter ${parameter} does not match the one available in the injector. ` +
+      '`setupTestingRouter` is meant to be used as a factory function with dependencies coming from DI.');
 }
 
 /**
  * Router setup factory function used for testing.
  *
  * @publicApi
+ * @deprecated Use `provideRouter` or `RouterTestingModule` instead.
  */
 export function setupTestingRouter(
     urlSerializer: UrlSerializer, contexts: ChildrenOutletContexts, location: Location,
     compiler: Compiler, injector: Injector, routes: Route[][],
     opts?: ExtraOptions|UrlHandlingStrategy|null, urlHandlingStrategy?: UrlHandlingStrategy,
     routeReuseStrategy?: RouteReuseStrategy, titleStrategy?: TitleStrategy) {
-  const router =
-      new Router(null!, urlSerializer, contexts, location, injector, compiler, flatten(routes));
+  // Note: The checks below are to detect misconfigured providers and invalid uses of
+  // `setupTestingRouter`. This function is not used internally (neither in router code or anywhere
+  // in g3). It appears this function was exposed as publicApi by mistake and should not be used
+  // externally either. However, if it is, the documented intent is to be used as a factory function
+  // and parameter values should always match what's available in DI.
+  if (urlSerializer !== inject(UrlSerializer)) {
+    throwInvalidConfigError('urlSerializer');
+  }
+  if (contexts !== inject(ChildrenOutletContexts)) {
+    throwInvalidConfigError('contexts');
+  }
+  if (location !== inject(Location)) {
+    throwInvalidConfigError('location');
+  }
+  if (compiler !== inject(Compiler)) {
+    throwInvalidConfigError('compiler');
+  }
+  if (injector !== inject(Injector)) {
+    throwInvalidConfigError('injector');
+  }
+  if (routes !== inject(ROUTES)) {
+    throwInvalidConfigError('routes');
+  }
   if (opts) {
     // Handle deprecated argument ordering.
     if (isUrlHandlingStrategy(opts)) {
-      router.urlHandlingStrategy = opts;
+      if (opts !== inject(UrlHandlingStrategy)) {
+        throwInvalidConfigError('opts (UrlHandlingStrategy)');
+      }
     } else {
-      // Handle ExtraOptions
-      assignExtraOptionsToRouter(opts, router);
+      if (opts !== inject(ROUTER_CONFIGURATION)) {
+        throwInvalidConfigError('opts (ROUTER_CONFIGURATION)');
+      }
     }
   }
 
-  if (urlHandlingStrategy) {
-    router.urlHandlingStrategy = urlHandlingStrategy;
+  if (urlHandlingStrategy !== inject(UrlHandlingStrategy)) {
+    throwInvalidConfigError('urlHandlingStrategy');
   }
 
-  if (routeReuseStrategy) {
-    router.routeReuseStrategy = routeReuseStrategy;
+  if (routeReuseStrategy !== inject(RouteReuseStrategy)) {
+    throwInvalidConfigError('routeReuseStrategy');
   }
 
-  router.titleStrategy = titleStrategy;
+  if (titleStrategy !== inject(TitleStrategy)) {
+    throwInvalidConfigError('titleStrategy');
+  }
 
-  return router;
+  return new Router();
 }
 
 /**
@@ -105,27 +115,9 @@ export function setupTestingRouter(
   exports: [RouterModule],
   providers: [
     ROUTER_PROVIDERS,
-    EXTRA_ROUTER_TESTING_PROVIDERS,
-    {provide: Location, useClass: SpyLocation},
-    {provide: LocationStrategy, useClass: MockLocationStrategy},
-    {
-      provide: Router,
-      useFactory: setupTestingRouterInternal,
-      deps: [
-        UrlSerializer,
-        ChildrenOutletContexts,
-        Location,
-        Compiler,
-        Injector,
-        ROUTES,
-        TitleStrategy,
-        ROUTER_CONFIGURATION,
-        [UrlHandlingStrategy, new Optional()],
-        [RouteReuseStrategy, new Optional()],
-      ]
-    },
-    providePreloading(NoPreloading),
-    provideRoutes([]),
+    provideLocationMocks(),
+    withPreloading(NoPreloading).ɵproviders,
+    {provide: ROUTES, multi: true, useValue: []},
   ]
 })
 export class RouterTestingModule {
@@ -134,7 +126,7 @@ export class RouterTestingModule {
     return {
       ngModule: RouterTestingModule,
       providers: [
-        provideRoutes(routes),
+        {provide: ROUTES, multi: true, useValue: routes},
         {provide: ROUTER_CONFIGURATION, useValue: config ? config : {}},
       ]
     };

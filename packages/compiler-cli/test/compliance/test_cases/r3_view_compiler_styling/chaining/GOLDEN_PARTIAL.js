@@ -3,7 +3,7 @@
  ****************************************************************************************************/
 import { Component } from '@angular/core';
 import * as i0 from "@angular/core";
-export class MyComponent {
+class MyComponent {
     constructor() {
         this.yesToApple = true;
         this.yesToOrange = true;
@@ -15,6 +15,7 @@ MyComponent.ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "
    [class.apple]="yesToApple"
    [class.orange]="yesToOrange"
    [class.tomato]="yesToTomato"></div>`, isInline: true });
+export { MyComponent };
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "0.0.0-PLACEHOLDER", ngImport: i0, type: MyComponent, decorators: [{
             type: Component,
             args: [{
@@ -34,7 +35,7 @@ export declare class MyComponent {
     yesToOrange: boolean;
     yesToTomato: boolean;
     static ɵfac: i0.ɵɵFactoryDeclaration<MyComponent, never>;
-    static ɵcmp: i0.ɵɵComponentDeclaration<MyComponent, "ng-component", never, {}, {}, never, never, false>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<MyComponent, "ng-component", never, {}, {}, never, never, false, never>;
 }
 
 /****************************************************************************************************
@@ -42,7 +43,7 @@ export declare class MyComponent {
  ****************************************************************************************************/
 import { Component } from '@angular/core';
 import * as i0 from "@angular/core";
-export class MyComponent {
+class MyComponent {
     constructor() {
         this.color = 'red';
         this.border = '1px solid purple';
@@ -54,6 +55,7 @@ MyComponent.ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "
     [style.color]="color"
     [style.border]="border"
     [style.transition]="transition"></div>`, isInline: true });
+export { MyComponent };
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "0.0.0-PLACEHOLDER", ngImport: i0, type: MyComponent, decorators: [{
             type: Component,
             args: [{
@@ -73,7 +75,7 @@ export declare class MyComponent {
     border: string;
     transition: string;
     static ɵfac: i0.ɵɵFactoryDeclaration<MyComponent, never>;
-    static ɵcmp: i0.ɵɵComponentDeclaration<MyComponent, "ng-component", never, {}, {}, never, never, false>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<MyComponent, "ng-component", never, {}, {}, never, never, false, never>;
 }
 
 /****************************************************************************************************
@@ -81,7 +83,7 @@ export declare class MyComponent {
  ****************************************************************************************************/
 import { Component } from '@angular/core';
 import * as i0 from "@angular/core";
-export class MyComponent {
+class MyComponent {
     constructor() {
         this.color = 'red';
         this.border = '1px solid purple';
@@ -99,6 +101,7 @@ MyComponent.ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "
     [style.border]="border"
     [class.tomato]="yesToTomato"
     [style.transition]="transition"></div>`, isInline: true });
+export { MyComponent };
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "0.0.0-PLACEHOLDER", ngImport: i0, type: MyComponent, decorators: [{
             type: Component,
             args: [{
@@ -124,7 +127,7 @@ export declare class MyComponent {
     yesToOrange: boolean;
     yesToTomato: boolean;
     static ɵfac: i0.ɵɵFactoryDeclaration<MyComponent, never>;
-    static ɵcmp: i0.ɵɵComponentDeclaration<MyComponent, "ng-component", never, {}, {}, never, never, false>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<MyComponent, "ng-component", never, {}, {}, never, never, false, never>;
 }
 
 /****************************************************************************************************
@@ -132,7 +135,7 @@ export declare class MyComponent {
  ****************************************************************************************************/
 import { Component } from '@angular/core';
 import * as i0 from "@angular/core";
-export class MyComponent {
+class MyComponent {
     constructor() {
         this.one = '';
     }
@@ -142,6 +145,7 @@ MyComponent.ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "
    style.color="a{{one}}b"
    style.border="a{{one}}b"
    style.transition="a{{one}}b"></div>`, isInline: true });
+export { MyComponent };
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "0.0.0-PLACEHOLDER", ngImport: i0, type: MyComponent, decorators: [{
             type: Component,
             args: [{
@@ -159,7 +163,7 @@ import * as i0 from "@angular/core";
 export declare class MyComponent {
     one: string;
     static ɵfac: i0.ɵɵFactoryDeclaration<MyComponent, never>;
-    static ɵcmp: i0.ɵɵComponentDeclaration<MyComponent, "ng-component", never, {}, {}, never, never, false>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<MyComponent, "ng-component", never, {}, {}, never, never, false, never>;
 }
 
 /****************************************************************************************************
@@ -167,7 +171,7 @@ export declare class MyComponent {
  ****************************************************************************************************/
 import { Component } from '@angular/core';
 import * as i0 from "@angular/core";
-export class MyComponent {
+class MyComponent {
     constructor() {
         this.one = '';
         this.two = '';
@@ -182,6 +186,7 @@ MyComponent.ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "
     style.width="a{{one}}b{{two}}c"
     style.height="a{{one}}b{{two}}c{{three}}d"
     style.top="a{{one}}b{{two}}c{{three}}d"></div>`, isInline: true });
+export { MyComponent };
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "0.0.0-PLACEHOLDER", ngImport: i0, type: MyComponent, decorators: [{
             type: Component,
             args: [{
@@ -204,7 +209,7 @@ export declare class MyComponent {
     two: string;
     three: string;
     static ɵfac: i0.ɵɵFactoryDeclaration<MyComponent, never>;
-    static ɵcmp: i0.ɵɵComponentDeclaration<MyComponent, "ng-component", never, {}, {}, never, never, false>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<MyComponent, "ng-component", never, {}, {}, never, never, false, never>;
 }
 
 /****************************************************************************************************
@@ -212,7 +217,7 @@ export declare class MyComponent {
  ****************************************************************************************************/
 import { Component } from '@angular/core';
 import * as i0 from "@angular/core";
-export class MyComponent {
+class MyComponent {
     constructor() {
         this.one = '';
         this.transition = 'all 1337ms ease';
@@ -231,6 +236,7 @@ MyComponent.ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "
                     [style.width]="width"
                     style.height="a{{one}}b"
                     style.top="a{{one}}b"></div>`, isInline: true });
+export { MyComponent };
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "0.0.0-PLACEHOLDER", ngImport: i0, type: MyComponent, decorators: [{
             type: Component,
             args: [{
@@ -257,7 +263,7 @@ export declare class MyComponent {
     yesToApple: boolean;
     yesToOrange: boolean;
     static ɵfac: i0.ɵɵFactoryDeclaration<MyComponent, never>;
-    static ɵcmp: i0.ɵɵComponentDeclaration<MyComponent, "ng-component", never, {}, {}, never, never, false>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<MyComponent, "ng-component", never, {}, {}, never, never, false, never>;
 }
 
 /****************************************************************************************************
@@ -265,7 +271,7 @@ export declare class MyComponent {
  ****************************************************************************************************/
 import { Component } from '@angular/core';
 import * as i0 from "@angular/core";
-export class MyComponent {
+class MyComponent {
     constructor() {
         this.one = '';
         this.two = '';
@@ -282,6 +288,7 @@ MyComponent.ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "
     style.width="a{{one}}b{{two}}c{{three}}d"
     style.height="a{{one}}b"
     style.top="a{{one}}b"></div>`, isInline: true });
+export { MyComponent };
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "0.0.0-PLACEHOLDER", ngImport: i0, type: MyComponent, decorators: [{
             type: Component,
             args: [{
@@ -306,7 +313,7 @@ export declare class MyComponent {
     transition: string;
     width: string;
     static ɵfac: i0.ɵɵFactoryDeclaration<MyComponent, never>;
-    static ɵcmp: i0.ɵɵComponentDeclaration<MyComponent, "ng-component", never, {}, {}, never, never, false>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<MyComponent, "ng-component", never, {}, {}, never, never, false, never>;
 }
 
 /****************************************************************************************************
@@ -314,7 +321,7 @@ export declare class MyComponent {
  ****************************************************************************************************/
 import { Component, HostBinding } from '@angular/core';
 import * as i0 from "@angular/core";
-export class MyComponent {
+class MyComponent {
     constructor() {
         this.color = 'red';
         this.transition = 'all 1337ms ease';
@@ -326,6 +333,7 @@ export class MyComponent {
 }
 MyComponent.ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "0.0.0-PLACEHOLDER", ngImport: i0, type: MyComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
 MyComponent.ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "14.0.0", version: "0.0.0-PLACEHOLDER", type: MyComponent, selector: "ng-component", host: { properties: { "class.apple": "yesToApple", "style.color": "color", "class.tomato": "yesToTomato", "style.transition": "transition", "style.border": "this.border", "class.orange": "this.yesToOrange" } }, ngImport: i0, template: '', isInline: true });
+export { MyComponent };
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "0.0.0-PLACEHOLDER", ngImport: i0, type: MyComponent, decorators: [{
             type: Component,
             args: [{
@@ -357,6 +365,6 @@ export declare class MyComponent {
     border: string;
     yesToOrange: boolean;
     static ɵfac: i0.ɵɵFactoryDeclaration<MyComponent, never>;
-    static ɵcmp: i0.ɵɵComponentDeclaration<MyComponent, "ng-component", never, {}, {}, never, never, false>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<MyComponent, "ng-component", never, {}, {}, never, never, false, never>;
 }
 

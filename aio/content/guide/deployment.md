@@ -139,7 +139,7 @@ To deploy your Angular application to [GitHub Pages](https://help.github.com/art
 
     </code-example>
 
-1.  Build your project using the Github project name, with the Angular CLI command [`ng build`](cli/build) and the following options, where `your_project_name` is the name of the project that you gave the GitHub repository in step 1.
+1.  Build your project using the GitHub project name, with the Angular CLI command [`ng build`](cli/build) and the following options, where `your_project_name` is the name of the project that you gave the GitHub repository in step 1.
 
     Be sure to include the slashes on either side of your project name as in `/your_project_name/`.
 
@@ -151,14 +151,14 @@ To deploy your Angular application to [GitHub Pages](https://help.github.com/art
 
 1.  When the build is complete, make a copy of `docs/index.html` and name it `docs/404.html`.
 1.  Commit your changes and push.
-1.  On the GitHub project page, go to Settings and scroll down to the GitHub Pages section to configure the site to [publish from the docs folder](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site#choosing-a-publishing-source).
+1.  On the GitHub project page, go to Settings and select the Pages option from the left sidebar to configure the site to [publish from the docs folder](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site#choosing-a-publishing-source).
 1.  Click Save.
 1.  Click on the GitHub Pages link at the top of the GitHub Pages section to see your deployed application.
     The format of the link is `https://<user_name>.github.io/<project_name>`.
 
 <div class="alert is-helpful">
 
-Check out [angular-cli-ghpages](https://github.com/angular-buch/angular-cli-ghpages), a full featured package that does all this for you and has extra functionality.
+Check out [angular-cli-ghpages](https://github.com/angular-buch/angular-cli-ghpages), a full-featured package that does all this for you and has extra functionality.
 
 </div>
 
@@ -170,7 +170,7 @@ This section covers changes you may have to make to the server or to files deplo
 
 <a id="fallback"></a>
 
-### Routed apps must fallback to `index.html`
+### Routed apps must fall back to `index.html`
 
 Angular applications are perfect candidates for serving with a simple static HTML server.
 You don't need a server-side engine to dynamically compose application pages because

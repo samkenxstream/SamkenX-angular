@@ -14,10 +14,6 @@ import {equalArraysOrString, forEach, shallowEqual} from './utils/collection';
 
 const NG_DEV_MODE = typeof ngDevMode === 'undefined' || ngDevMode;
 
-export function createEmptyUrlTree() {
-  return new UrlTree(new UrlSegmentGroup([], {}), {}, null);
-}
-
 /**
  * A set of options which specify how to determine if a `UrlTree` is active, given the `UrlTree`
  * for the current router state.
@@ -193,17 +189,26 @@ function matrixParamsMatch(
  */
 export class UrlTree {
   /** @internal */
-  // TODO(issue/24571): remove '!'.
-  _queryParamMap!: ParamMap;
-
+  _queryParamMap?: ParamMap;
   /** @internal */
+  _warnIfUsedForNavigation?: string;
+
   constructor(
       /** The root segment group of the URL tree */
-      public root: UrlSegmentGroup,
+      public root: UrlSegmentGroup = new UrlSegmentGroup([], {}),
       /** The query params of the URL */
-      public queryParams: Params,
+      public queryParams: Params = {},
       /** The fragment of the URL */
-      public fragment: string|null) {}
+      public fragment: string|null = null) {
+    if (NG_DEV_MODE) {
+      if (root.segments.length > 0) {
+        throw new RuntimeError(
+            RuntimeErrorCode.INVALID_ROOT_URL_SEGMENT,
+            'The root `UrlSegmentGroup` should not contain `segments`. ' +
+                'Instead, these segments belong in the `children` so they can be associated with a named outlet.');
+      }
+    }
+  }
 
   get queryParamMap(): ParamMap {
     if (!this._queryParamMap) {
@@ -295,8 +300,7 @@ export class UrlSegmentGroup {
  */
 export class UrlSegment {
   /** @internal */
-  // TODO(issue/24571): remove '!'.
-  _parameterMap!: ParamMap;
+  _parameterMap?: ParamMap;
 
   constructor(
       /** The path part of a URL segment */
@@ -751,7 +755,7 @@ export function createRoot(rootCandidate: UrlSegmentGroup) {
  * group into something like `/a(aux:)`, where `aux` is an empty child segment.
  */
 export function squashSegmentGroup(segmentGroup: UrlSegmentGroup): UrlSegmentGroup {
-  const newChildren = {} as any;
+  const newChildren: Record<string, UrlSegmentGroup> = {};
   for (const childOutlet of Object.keys(segmentGroup.children)) {
     const child = segmentGroup.children[childOutlet];
     const childCandidate = squashSegmentGroup(child);

@@ -23,6 +23,7 @@ import {mapLiteral} from '../../output/map_util';
 import * as o from '../../output/output_ast';
 import {ParseError, ParseSourceSpan, sanitizeIdentifier} from '../../parse_util';
 import {DomElementSchemaRegistry} from '../../schema/dom_element_schema_registry';
+import {isIframeSecuritySensitiveAttr} from '../../schema/dom_security_schema';
 import {isTrustedTypesSink} from '../../schema/trusted_types_sinks';
 import {CssSelector} from '../../selector';
 import {BindingParser} from '../../template_parser/binding_parser';
@@ -783,8 +784,19 @@ export class TemplateDefinitionBuilder implements t.Visitor<void>, LocalResolver
           const params: any[] = [];
           const [attrNamespace, attrName] = splitNsName(input.name);
           const isAttributeBinding = inputType === BindingType.Attribute;
-          const sanitizationRef = resolveSanitizationFn(input.securityContext, isAttributeBinding);
-          if (sanitizationRef) params.push(sanitizationRef);
+          let sanitizationRef = resolveSanitizationFn(input.securityContext, isAttributeBinding);
+          if (!sanitizationRef) {
+            // If there was no sanitization function found based on the security context
+            // of an attribute/property - check whether this attribute/property is
+            // one of the security-sensitive <iframe> attributes (and that the current
+            // element is actually an <iframe>).
+            if (isIframeElement(element.name) && isIframeSecuritySensitiveAttr(input.name)) {
+              sanitizationRef = o.importExpr(R3.validateIframeAttribute);
+            }
+          }
+          if (sanitizationRef) {
+            params.push(sanitizationRef);
+          }
           if (attrNamespace) {
             const namespaceLiteral = o.literal(attrNamespace);
 
@@ -1381,7 +1393,7 @@ export class TemplateDefinitionBuilder implements t.Visitor<void>, LocalResolver
       return o.TYPED_NULL_EXPR;
     }
 
-    const refsParam = flatten(references.map(reference => {
+    const refsParam = references.flatMap(reference => {
       const slot = this.allocateDataSlot();
       // Generate the update temporary.
       const variableName = this._bindingScope.freshReferenceName();
@@ -1398,8 +1410,9 @@ export class TemplateDefinitionBuilder implements t.Visitor<void>, LocalResolver
             const refExpr = lhs.set(o.importExpr(R3.reference).callFn([o.literal(slot)]));
             return nextContextStmt.concat(refExpr.toConstDecl());
           }, true);
+
       return [reference.name, reference.value];
-    }));
+    });
 
     return asLiteral(refsParam);
   }
@@ -2211,6 +2224,10 @@ function isTextNode(node: t.Node): boolean {
   return node instanceof t.Text || node instanceof t.BoundText || node instanceof t.Icu;
 }
 
+function isIframeElement(tagName: string): boolean {
+  return tagName.toLowerCase() === 'iframe';
+}
+
 function hasTextChildrenOnly(children: t.Node[]): boolean {
   return children.every(isTextNode);
 }
@@ -2343,11 +2360,4 @@ export interface ParsedTemplate {
    * option is enabled.
    */
   commentNodes?: t.Comment[];
-}
-
-function flatten<T>(list: Array<T|T[]>): T[] {
-  return list.reduce((flat: any[], item: T|T[]): T[] => {
-    const flatItem = Array.isArray(item) ? flatten(item) : item;
-    return (<T[]>flat).concat(flatItem);
-  }, []);
 }

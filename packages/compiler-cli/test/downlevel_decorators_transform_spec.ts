@@ -625,7 +625,7 @@ describe('downlevel decorator transform', () => {
        export class MyDir {
          constructor(@Inject('$state') param: angular.IState,
                      @Inject('$overlay') other: IOverlay,
-                     @Inject('$default') default: TypeFromDefaultImport,
+                     @Inject('$default') fromDefaultImport: TypeFromDefaultImport,
                      @Inject('$keyCodes') keyCodes: KeyCodes) {}
        }
      `);
@@ -649,10 +649,10 @@ describe('downlevel decorator transform', () => {
     const stripAllDecoratorsTransform: ts.TransformerFactory<ts.SourceFile> = context => {
       return (sourceFile: ts.SourceFile) => {
         const visitNode = (node: ts.Node): ts.Node => {
-          if (ts.isClassDeclaration(node) || ts.isClassElement(node)) {
-            const cloned = ts.getMutableClone(node);
-            (cloned.decorators as undefined) = undefined;
-            return cloned;
+          if (ts.isClassDeclaration(node)) {
+            return ts.factory.createClassDeclaration(
+                ts.getModifiers(node), node.name, node.typeParameters, node.heritageClauses,
+                node.members);
           }
           return ts.visitEachChild(node, visitNode, context);
         };
@@ -701,6 +701,33 @@ describe('downlevel decorator transform', () => {
        ];`);
     expect(output).not.toContain('tslib');
   });
+
+  it('should allow for type-only references to be removed with `emitDecoratorMetadata` from custom decorators',
+     () => {
+       context.writeFile('/external-interface.ts', `
+        export interface ExternalInterface {
+          id?: string;
+        }
+      `);
+
+       const {output} = transform(
+           `
+            import { ExternalInterface } from './external-interface';
+
+            export function CustomDecorator() {
+              return <T>(target, propertyKey, descriptor: TypedPropertyDescriptor<T>) => {}
+            }
+
+            export class Foo {
+              @CustomDecorator() static test(): ExternalInterface { return {}; }
+            }
+          `,
+           {emitDecoratorMetadata: true});
+
+       expect(diagnostics.length).toBe(0);
+       expect(output).not.toContain('ExternalInterface');
+       expect(output).toContain('metadata("design:returntype", Object)');
+     });
 
   describe('class decorators skipped', () => {
     beforeEach(() => skipClassDecorators = true);
@@ -873,7 +900,7 @@ describe('downlevel decorator transform', () => {
     function createProgramWithTransform(files: string[]) {
       const program = ts.createProgram(
           files, {
-            moduleResolution: ts.ModuleResolutionKind.NodeJs,
+            moduleResolution: ts.ModuleResolutionKind.Node10,
             importHelpers: true,
             lib: [],
             module: ts.ModuleKind.ESNext,

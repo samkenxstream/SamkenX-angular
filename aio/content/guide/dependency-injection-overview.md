@@ -6,7 +6,7 @@ In Angular, dependencies are typically services, but they also can be values, su
 
 <div class="alert is-helpful">
 
-See the <live-example></live-example> for a working example containing the code snippets in this guide.
+See the <live-example name="dependency-injection"></live-example> for a working example containing the code snippets in this guide.
 
 </div>
 
@@ -14,7 +14,7 @@ See the <live-example></live-example> for a working example containing the code 
 
 You should be familiar with the Angular apps in general, and have the fundamental knowledge of Components, Directives, and NgModules. It's highly recommended that you complete the following tutorial:
 
-[Tour of Heroes application and tutorial](tutorial)
+[Tour of Heroes application and tutorial](tutorial/tour-of-heroes)
 
 ## Learn about Angular dependency injection
 

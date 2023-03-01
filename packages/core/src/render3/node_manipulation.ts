@@ -9,30 +9,26 @@
 import {ViewEncapsulation} from '../metadata/view';
 import {RendererStyleFlags2} from '../render/api_flags';
 import {addToArray, removeFromArray} from '../util/array_utils';
-import {assertDefined, assertEqual, assertFunction, assertString} from '../util/assert';
+import {assertDefined, assertEqual, assertFunction, assertNumber, assertString} from '../util/assert';
 import {escapeCommentText} from '../util/dom';
 
 import {assertLContainer, assertLView, assertParentView, assertProjectionSlots, assertTNodeForLView} from './assert';
 import {attachPatchData} from './context_discovery';
 import {icuContainerIterate} from './i18n/i18n_tree_shaking';
-import {CONTAINER_HEADER_OFFSET, HAS_TRANSPLANTED_VIEWS, LContainer, MOVED_VIEWS, NATIVE, unusedValueExportToPlacateAjd as unused1} from './interfaces/container';
+import {CONTAINER_HEADER_OFFSET, HAS_TRANSPLANTED_VIEWS, LContainer, MOVED_VIEWS, NATIVE} from './interfaces/container';
 import {ComponentDef} from './interfaces/definition';
 import {NodeInjectorFactory} from './interfaces/injector';
 import {unregisterLView} from './interfaces/lview_tracking';
-import {TElementNode, TIcuContainerNode, TNode, TNodeFlags, TNodeType, TProjectionNode, unusedValueExportToPlacateAjd as unused2} from './interfaces/node';
-import {unusedValueExportToPlacateAjd as unused3} from './interfaces/projection';
-import {Renderer, unusedValueExportToPlacateAjd as unused4} from './interfaces/renderer';
+import {TElementNode, TIcuContainerNode, TNode, TNodeFlags, TNodeType, TProjectionNode} from './interfaces/node';
+import {Renderer} from './interfaces/renderer';
 import {RComment, RElement, RNode, RTemplate, RText} from './interfaces/renderer_dom';
 import {isLContainer, isLView} from './interfaces/type_checks';
-import {CHILD_HEAD, CLEANUP, DECLARATION_COMPONENT_VIEW, DECLARATION_LCONTAINER, DestroyHookData, FLAGS, HookData, HookFn, HOST, LView, LViewFlags, NEXT, PARENT, QUERIES, RENDERER, T_HOST, TVIEW, TView, TViewType, unusedValueExportToPlacateAjd as unused5} from './interfaces/view';
+import {CHILD_HEAD, CLEANUP, DECLARATION_COMPONENT_VIEW, DECLARATION_LCONTAINER, DestroyHookData, FLAGS, HookData, HookFn, HOST, LView, LViewFlags, NEXT, ON_DESTROY_HOOKS, PARENT, QUERIES, RENDERER, T_HOST, TVIEW, TView, TViewType} from './interfaces/view';
 import {assertTNodeType} from './node_assert';
 import {profiler, ProfilerEvent} from './profiler';
+import {setUpAttributes} from './util/attrs_utils';
 import {getLViewParent} from './util/view_traversal_utils';
 import {getNativeByTNode, unwrapRNode, updateTransplantedViewCount} from './util/view_utils';
-
-
-
-const unusedValueToPlacateAjd = unused1 + unused2 + unused3 + unused4 + unused5;
 
 const enum WalkTNodeTreeAction {
   /** node create in the native environment. Run on initial creation. */
@@ -443,47 +439,39 @@ function cleanUpView(tView: TView, lView: LView): void {
 function processCleanups(tView: TView, lView: LView): void {
   const tCleanup = tView.cleanup;
   const lCleanup = lView[CLEANUP]!;
-  // `LCleanup` contains both share information with `TCleanup` as well as instance specific
-  // information appended at the end. We need to know where the end of the `TCleanup` information
-  // is, and we track this with `lastLCleanupIndex`.
-  let lastLCleanupIndex = -1;
   if (tCleanup !== null) {
     for (let i = 0; i < tCleanup.length - 1; i += 2) {
       if (typeof tCleanup[i] === 'string') {
-        // This is a native DOM listener
-        const idxOrTargetGetter = tCleanup[i + 1];
-        const target = typeof idxOrTargetGetter === 'function' ?
-            idxOrTargetGetter(lView) :
-            unwrapRNode(lView[idxOrTargetGetter]);
-        const listener = lCleanup[lastLCleanupIndex = tCleanup[i + 2]];
-        const useCaptureOrSubIdx = tCleanup[i + 3];
-        if (typeof useCaptureOrSubIdx === 'boolean') {
-          // native DOM listener registered with Renderer3
-          target.removeEventListener(tCleanup[i], listener, useCaptureOrSubIdx);
+        // This is a native DOM listener. It will occupy 4 entries in the TCleanup array (hence i +=
+        // 2 at the end of this block).
+        const targetIdx = tCleanup[i + 3];
+        ngDevMode && assertNumber(targetIdx, 'cleanup target must be a number');
+        if (targetIdx >= 0) {
+          // unregister
+          lCleanup[targetIdx]();
         } else {
-          if (useCaptureOrSubIdx >= 0) {
-            // unregister
-            lCleanup[lastLCleanupIndex = useCaptureOrSubIdx]();
-          } else {
-            // Subscription
-            lCleanup[lastLCleanupIndex = -useCaptureOrSubIdx].unsubscribe();
-          }
+          // Subscription
+          lCleanup[-targetIdx].unsubscribe();
         }
         i += 2;
       } else {
         // This is a cleanup function that is grouped with the index of its context
-        const context = lCleanup[lastLCleanupIndex = tCleanup[i + 1]];
+        const context = lCleanup[tCleanup[i + 1]];
         tCleanup[i].call(context);
       }
     }
   }
   if (lCleanup !== null) {
-    for (let i = lastLCleanupIndex + 1; i < lCleanup.length; i++) {
-      const instanceCleanupFn = lCleanup[i];
-      ngDevMode && assertFunction(instanceCleanupFn, 'Expecting instance cleanup function.');
-      instanceCleanupFn();
-    }
     lView[CLEANUP] = null;
+  }
+  const destroyHooks = lView[ON_DESTROY_HOOKS];
+  if (destroyHooks !== null) {
+    for (let i = 0; i < destroyHooks.length; i++) {
+      const destroyHooksFn = destroyHooks[i];
+      ngDevMode && assertFunction(destroyHooksFn, 'Expecting destroy hook to be a function.');
+      destroyHooksFn();
+    }
+    lView[ON_DESTROY_HOOKS] = null;
   }
 }
 
@@ -576,10 +564,11 @@ export function getClosestRElement(tView: TView, tNode: TNode|null, lView: LView
     return lView[HOST];
   } else {
     ngDevMode && assertTNodeType(parentTNode, TNodeType.AnyRNode | TNodeType.Container);
-    if (parentTNode.flags & TNodeFlags.isComponentHost) {
+    const {componentOffset} = parentTNode;
+    if (componentOffset > -1) {
       ngDevMode && assertTNodeForLView(parentTNode, lView);
-      const encapsulation =
-          (tView.data[parentTNode.directiveStart] as ComponentDef<unknown>).encapsulation;
+      const {encapsulation} =
+          (tView.data[parentTNode.directiveStart + componentOffset] as ComponentDef<unknown>);
       // We've got a parent which is an element in the current view. We just need to verify if the
       // parent element is not a component. Component's content nodes are not inserted immediately
       // because they will be projected, and so doing insert at this point would be wasteful.
@@ -1089,4 +1078,21 @@ export function writeDirectClass(renderer: Renderer, element: RElement, newValue
     renderer.setAttribute(element, 'class', newValue);
   }
   ngDevMode && ngDevMode.rendererSetClassName++;
+}
+
+/** Sets up the static DOM attributes on an `RNode`. */
+export function setupStaticAttributes(renderer: Renderer, element: RElement, tNode: TNode) {
+  const {mergedAttrs, classes, styles} = tNode;
+
+  if (mergedAttrs !== null) {
+    setUpAttributes(renderer, element, mergedAttrs);
+  }
+
+  if (classes !== null) {
+    writeDirectClass(renderer, element, classes);
+  }
+
+  if (styles !== null) {
+    writeDirectStyle(renderer, element, styles);
+  }
 }

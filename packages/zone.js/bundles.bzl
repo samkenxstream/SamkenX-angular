@@ -14,13 +14,10 @@ BUNDLES_ENTRY_POINTS = {
         "entrypoint": _DIR + "mix/rollup-mix",
     },
     "zone-node": {
-        "entrypoint": _DIR + "node/rollup-main",
+        "entrypoint": _DIR + "node/rollup-main-node-bundle",
     },
     "async-test": {
         "entrypoint": _DIR + "testing/async-testing",
-    },
-    "async-stack-tagging": {
-        "entrypoint": _DIR + "zone-spec/async-stack-tagging",
     },
     "fake-async-test": {
         "entrypoint": _DIR + "testing/fake-async",

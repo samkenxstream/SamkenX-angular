@@ -49,7 +49,6 @@ runInEachFileSystem(os => {
 
       it('should describe references', () => {
         const namedFn = ts.factory.createFunctionDeclaration(
-            /* decorators */ undefined,
             /* modifiers */ undefined,
             /* asteriskToken */ undefined,
             /* name */ 'test',
@@ -61,7 +60,6 @@ runInEachFileSystem(os => {
         expect(describeResolvedType(new Reference(namedFn))).toBe('test');
 
         const anonymousFn = ts.factory.createFunctionDeclaration(
-            /* decorators */ undefined,
             /* modifiers */ undefined,
             /* asteriskToken */ undefined,
             /* name */ undefined,
@@ -75,7 +73,6 @@ runInEachFileSystem(os => {
 
       it('should describe enum values', () => {
         const decl = ts.factory.createEnumDeclaration(
-            /* decorators */ undefined,
             /* modifiers */ undefined,
             /* name */ 'MyEnum',
             /* members */[ts.factory.createEnumMember(

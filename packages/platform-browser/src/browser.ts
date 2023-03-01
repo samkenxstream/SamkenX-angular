@@ -7,13 +7,13 @@
  */
 
 import {CommonModule, DOCUMENT, XhrFactory, ɵPLATFORM_BROWSER_ID as PLATFORM_BROWSER_ID} from '@angular/common';
-import {APP_ID, ApplicationModule, ApplicationRef, createPlatformFactory, ErrorHandler, ImportedNgModuleProviders, Inject, InjectionToken, ModuleWithProviders, NgModule, NgZone, Optional, PLATFORM_ID, PLATFORM_INITIALIZER, platformCore, PlatformRef, Provider, RendererFactory2, SkipSelf, StaticProvider, Testability, TestabilityRegistry, Type, ɵINJECTOR_SCOPE as INJECTOR_SCOPE, ɵinternalCreateApplication as internalCreateApplication, ɵsetDocument, ɵTESTABILITY as TESTABILITY, ɵTESTABILITY_GETTER as TESTABILITY_GETTER} from '@angular/core';
+import {APP_ID, ApplicationModule, ApplicationRef, createPlatformFactory, EnvironmentProviders, ErrorHandler, Inject, InjectionToken, ModuleWithProviders, NgModule, NgZone, Optional, PLATFORM_ID, PLATFORM_INITIALIZER, platformCore, PlatformRef, Provider, RendererFactory2, SkipSelf, StaticProvider, Testability, TestabilityRegistry, Type, ɵINJECTOR_SCOPE as INJECTOR_SCOPE, ɵinternalCreateApplication as internalCreateApplication, ɵsetDocument, ɵTESTABILITY as TESTABILITY, ɵTESTABILITY_GETTER as TESTABILITY_GETTER} from '@angular/core';
 
 import {BrowserDomAdapter} from './browser/browser_adapter';
 import {SERVER_TRANSITION_PROVIDERS, TRANSITION_ID} from './browser/server-transition';
 import {BrowserGetTestability} from './browser/testability';
 import {BrowserXhr} from './browser/xhr';
-import {DomRendererFactory2} from './dom/dom_renderer';
+import {DomRendererFactory2, REMOVE_STYLES_ON_COMPONENT_DESTROY} from './dom/dom_renderer';
 import {DomEventsPlugin} from './dom/events/dom_events';
 import {EVENT_MANAGER_PLUGINS, EventManager} from './dom/events/event_manager';
 import {KeyEventsPlugin} from './dom/events/key_events';
@@ -24,14 +24,13 @@ const NG_DEV_MODE = typeof ngDevMode === 'undefined' || !!ngDevMode;
 /**
  * Set of config options available during the application bootstrap operation.
  *
- * @developerPreview
  * @publicApi
  */
 export interface ApplicationConfig {
   /**
    * List of providers that should be available to the root component and all its children.
    */
-  providers: Array<Provider|ImportedNgModuleProviders>;
+  providers: Array<Provider|EnvironmentProviders>;
 }
 
 /**
@@ -92,7 +91,6 @@ export interface ApplicationConfig {
  * @returns A promise that returns an `ApplicationRef` instance once resolved.
  *
  * @publicApi
- * @developerPreview
  */
 export function bootstrapApplication(
     rootComponent: Type<unknown>, options?: ApplicationConfig): Promise<ApplicationRef> {
@@ -110,7 +108,6 @@ export function bootstrapApplication(
  * @returns A promise that returns an `ApplicationRef` instance once resolved.
  *
  * @publicApi
- * @developerPreview
  */
 export function createApplication(options?: ApplicationConfig) {
   return internalCreateApplication(createProvidersConfig(options));
@@ -135,7 +132,6 @@ function createProvidersConfig(options?: ApplicationConfig) {
  * @returns An array of providers required to setup Testability for an application and make it
  *     available for testing using Protractor.
  *
- * @developerPreview
  * @publicApi
  */
 export function provideProtractorTestingSupport(): Provider[] {
@@ -211,7 +207,7 @@ const BROWSER_MODULE_PROVIDERS: Provider[] = [
   {provide: EVENT_MANAGER_PLUGINS, useClass: KeyEventsPlugin, multi: true, deps: [DOCUMENT]}, {
     provide: DomRendererFactory2,
     useClass: DomRendererFactory2,
-    deps: [EventManager, DomSharedStylesHost, APP_ID]
+    deps: [EventManager, DomSharedStylesHost, APP_ID, REMOVE_STYLES_ON_COMPONENT_DESTROY]
   },
   {provide: RendererFactory2, useExisting: DomRendererFactory2},
   {provide: SharedStylesHost, useExisting: DomSharedStylesHost},

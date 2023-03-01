@@ -114,10 +114,9 @@ function getOptions(
     target: ts.ScriptTarget.ES2015,
     newLine: ts.NewLineKind.LineFeed,
     module: ts.ModuleKind.ES2015,
-    moduleResolution: ts.ModuleResolutionKind.NodeJs,
+    moduleResolution: ts.ModuleResolutionKind.Node10,
     typeRoots: ['node_modules/@types'],
     ...convertedCompilerOptions.options,
-    enableIvy: true,
     enableI18nLegacyMessageIdFormat: false,
     ...angularCompilerOptions,
   };

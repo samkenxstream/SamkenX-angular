@@ -7,10 +7,10 @@
  */
 
 import {CommonModule} from '@angular/common';
-import {Component, createEnvironmentInjector, Directive, EnvironmentInjector, forwardRef, Injector, Input, NgModule, NO_ERRORS_SCHEMA, OnInit, Pipe, PipeTransform, ViewChild, ViewContainerRef} from '@angular/core';
+import {Component, createEnvironmentInjector, Directive, EnvironmentInjector, forwardRef, Injector, Input, isStandalone, NgModule, NO_ERRORS_SCHEMA, OnInit, Pipe, PipeTransform, ViewChild, ViewContainerRef} from '@angular/core';
 import {TestBed} from '@angular/core/testing';
 
-describe('standalone components, directives and pipes', () => {
+describe('standalone components, directives, and pipes', () => {
   it('should render a standalone component', () => {
     @Component({
       standalone: true,
@@ -98,7 +98,7 @@ describe('standalone components, directives and pipes', () => {
         .toEqual('<inner-cmp>Look at me, no NgModule (kinda)!</inner-cmp>');
   });
 
-  it('should allow exporting standalone components, directives and pipes from NgModule', () => {
+  it('should allow exporting standalone components, directives, and pipes from NgModule', () => {
     @Component({
       selector: 'standalone-cmp',
       standalone: true,
@@ -152,7 +152,7 @@ describe('standalone components, directives and pipes', () => {
   });
 
 
-  it('should render a standalone component with dependenices and ambient providers', () => {
+  it('should render a standalone component with dependencies and ambient providers', () => {
     @Component({
       standalone: true,
       template: 'Inner',
@@ -444,6 +444,34 @@ describe('standalone components, directives and pipes', () => {
       standalone: true,
       template: `<div red>{{'' | blue}}</div>`,
       imports: [[RedIdDirective, [BluePipe]]],
+    })
+    class TestComponent {
+    }
+
+    const fixture = TestBed.createComponent(TestComponent);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.innerHTML).toBe('<div red="true">blue</div>');
+  });
+
+  it('should support readonly arrays in @Component.imports', () => {
+    @Directive({selector: '[red]', standalone: true, host: {'[attr.red]': 'true'}})
+    class RedIdDirective {
+    }
+
+    @Pipe({name: 'blue', pure: true, standalone: true})
+    class BluePipe implements PipeTransform {
+      transform() {
+        return 'blue';
+      }
+    }
+
+    const DirAndPipe = [RedIdDirective, BluePipe] as const;
+
+    @Component({
+      selector: 'standalone',
+      standalone: true,
+      template: `<div red>{{'' | blue}}</div>`,
+      imports: [DirAndPipe],
     })
     class TestComponent {
     }
@@ -817,6 +845,70 @@ describe('standalone components, directives and pipes', () => {
       // the assumption here is that not providing a template is equivalent to providing an empty
       // one
       expect(fixture.nativeElement.textContent).toBe('');
+    });
+  });
+
+  describe('isStandalone()', () => {
+    it('should return `true` if component is standalone', () => {
+      @Component({selector: 'standalone-cmp', standalone: true})
+      class StandaloneCmp {
+      }
+
+      expect(isStandalone(StandaloneCmp)).toBeTrue();
+    });
+
+    it('should return `false` if component is not standalone', () => {
+      @Component({selector: 'standalone-cmp', standalone: false})
+      class StandaloneCmp {
+      }
+
+      expect(isStandalone(StandaloneCmp)).toBeFalse();
+    });
+
+    it('should return `true` if directive is standalone', () => {
+      @Directive({selector: '[standaloneDir]', standalone: true})
+      class StandAloneDirective {
+      }
+
+      expect(isStandalone(StandAloneDirective)).toBeTrue();
+    });
+
+    it('should return `false` if directive is standalone', () => {
+      @Directive({selector: '[standaloneDir]', standalone: false})
+      class StandAloneDirective {
+      }
+
+      expect(isStandalone(StandAloneDirective)).toBeFalse();
+    });
+
+    it('should return `true` if pipe is standalone', () => {
+      @Pipe({name: 'standalonePipe', standalone: true})
+      class StandAlonePipe {
+      }
+
+      expect(isStandalone(StandAlonePipe)).toBeTrue();
+    });
+
+    it('should return `false` if pipe is standalone', () => {
+      @Pipe({name: 'standalonePipe', standalone: false})
+      class StandAlonePipe {
+      }
+
+      expect(isStandalone(StandAlonePipe)).toBeFalse();
+    });
+
+    it('should return `false` if the class is not annotated', () => {
+      class NonAnnotatedClass {}
+
+      expect(isStandalone(NonAnnotatedClass)).toBeFalse();
+    });
+
+    it('should return `false` if the class is an NgModule', () => {
+      @NgModule({})
+      class Module {
+      }
+
+      expect(isStandalone(Module)).toBeFalse();
     });
   });
 });

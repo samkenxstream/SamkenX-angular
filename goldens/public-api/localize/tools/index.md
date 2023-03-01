@@ -5,15 +5,15 @@
 ```ts
 
 import { AbsoluteFsPath } from '@angular/compiler-cli/private/localize';
-import * as _babelNamespace from '@babel/core';
 import { Element as Element_2 } from '@angular/compiler';
 import { Logger } from '@angular/compiler-cli/private/localize';
 import { MessageId } from '@angular/localize';
 import { NodePath } from '@babel/traverse';
 import { ParseError } from '@angular/compiler';
 import { PathManipulation } from '@angular/compiler-cli/private/localize';
+import { PluginObj } from '@babel/core';
 import { ReadonlyFileSystem } from '@angular/compiler-cli/private/localize';
-import * as t from '@babel/types';
+import { types } from '@babel/core';
 import { ɵParsedMessage } from '@angular/localize';
 import { ɵParsedTranslation } from '@angular/localize';
 import { ɵSourceLocation } from '@angular/localize';
@@ -23,8 +23,6 @@ import { ɵSourceMessage } from '@angular/localize';
 export class ArbTranslationParser implements TranslationParser<ArbJsonObject> {
     // (undocumented)
     analyze(_filePath: string, contents: string): ParseAnalysis<ArbJsonObject>;
-    // @deprecated (undocumented)
-    canParse(filePath: string, contents: string): ArbJsonObject | false;
     // (undocumented)
     parse(_filePath: string, contents: string, arb?: ArbJsonObject): ParsedTranslationBundle;
 }
@@ -37,7 +35,7 @@ export class ArbTranslationSerializer implements TranslationSerializer {
 }
 
 // @public
-export function buildLocalizeReplacement(messageParts: TemplateStringsArray, substitutions: readonly t.Expression[]): t.Expression;
+export function buildLocalizeReplacement(messageParts: TemplateStringsArray, substitutions: readonly types.Expression[]): types.Expression;
 
 // @public
 export function checkDuplicateMessages(fs: PathManipulation, messages: ɵParsedMessage[], duplicateMessageHandling: DiagnosticHandlingStrategy, basePath: AbsoluteFsPath): Diagnostics;
@@ -67,7 +65,7 @@ export class Diagnostics {
 }
 
 // @public
-export function isGlobalIdentifier(identifier: NodePath<t.Identifier>): boolean;
+export function isGlobalIdentifier(identifier: NodePath<types.Identifier>): boolean;
 
 // @public
 export class LegacyMessageIdMigrationSerializer implements TranslationSerializer {
@@ -96,8 +94,6 @@ export class MessageExtractor {
 export class SimpleJsonTranslationParser implements TranslationParser<SimpleJsonFile> {
     // (undocumented)
     analyze(filePath: string, contents: string): ParseAnalysis<SimpleJsonFile>;
-    // @deprecated (undocumented)
-    canParse(filePath: string, contents: string): SimpleJsonFile | false;
     // (undocumented)
     parse(_filePath: string, contents: string, json?: SimpleJsonFile): ParsedTranslationBundle;
 }
@@ -113,28 +109,26 @@ export class SimpleJsonTranslationSerializer implements TranslationSerializer {
 export function translate(diagnostics: Diagnostics, translations: Record<string, ɵParsedTranslation>, messageParts: TemplateStringsArray, substitutions: readonly any[], missingTranslation: DiagnosticHandlingStrategy): [TemplateStringsArray, readonly any[]];
 
 // @public
-export function unwrapExpressionsFromTemplateLiteral(quasi: NodePath<t.TemplateLiteral>, fs?: PathManipulation): [t.Expression[], (ɵSourceLocation | undefined)[]];
+export function unwrapExpressionsFromTemplateLiteral(quasi: NodePath<types.TemplateLiteral>, fs?: PathManipulation): [types.Expression[], (ɵSourceLocation | undefined)[]];
 
 // @public
-export function unwrapMessagePartsFromLocalizeCall(call: NodePath<t.CallExpression>, fs?: PathManipulation): [TemplateStringsArray, (ɵSourceLocation | undefined)[]];
+export function unwrapMessagePartsFromLocalizeCall(call: NodePath<types.CallExpression>, fs?: PathManipulation): [TemplateStringsArray, (ɵSourceLocation | undefined)[]];
 
 // @public
-export function unwrapMessagePartsFromTemplateLiteral(elements: NodePath<t.TemplateElement>[], fs?: PathManipulation): [
+export function unwrapMessagePartsFromTemplateLiteral(elements: NodePath<types.TemplateElement>[], fs?: PathManipulation): [
 TemplateStringsArray,
 (ɵSourceLocation | undefined)[]
 ];
 
 // @public
-export function unwrapSubstitutionsFromLocalizeCall(call: NodePath<t.CallExpression>, fs?: PathManipulation): [t.Expression[], (ɵSourceLocation | undefined)[]];
+export function unwrapSubstitutionsFromLocalizeCall(call: NodePath<types.CallExpression>, fs?: PathManipulation): [types.Expression[], (ɵSourceLocation | undefined)[]];
 
 // @public
 export class Xliff1TranslationParser implements TranslationParser<XmlTranslationParserHint> {
     // (undocumented)
     analyze(filePath: string, contents: string): ParseAnalysis<XmlTranslationParserHint>;
-    // @deprecated (undocumented)
-    canParse(filePath: string, contents: string): XmlTranslationParserHint | false;
     // (undocumented)
-    parse(filePath: string, contents: string, hint?: XmlTranslationParserHint): ParsedTranslationBundle;
+    parse(filePath: string, contents: string, hint: XmlTranslationParserHint): ParsedTranslationBundle;
 }
 
 // @public
@@ -148,10 +142,8 @@ export class Xliff1TranslationSerializer implements TranslationSerializer {
 export class Xliff2TranslationParser implements TranslationParser<XmlTranslationParserHint> {
     // (undocumented)
     analyze(filePath: string, contents: string): ParseAnalysis<XmlTranslationParserHint>;
-    // @deprecated (undocumented)
-    canParse(filePath: string, contents: string): XmlTranslationParserHint | false;
     // (undocumented)
-    parse(filePath: string, contents: string, hint?: XmlTranslationParserHint): ParsedTranslationBundle;
+    parse(filePath: string, contents: string, hint: XmlTranslationParserHint): ParsedTranslationBundle;
 }
 
 // @public
@@ -172,10 +164,8 @@ export class XmbTranslationSerializer implements TranslationSerializer {
 export class XtbTranslationParser implements TranslationParser<XmlTranslationParserHint> {
     // (undocumented)
     analyze(filePath: string, contents: string): ParseAnalysis<XmlTranslationParserHint>;
-    // @deprecated (undocumented)
-    canParse(filePath: string, contents: string): XmlTranslationParserHint | false;
     // (undocumented)
-    parse(filePath: string, contents: string, hint?: XmlTranslationParserHint): ParsedTranslationBundle;
+    parse(filePath: string, contents: string, hint: XmlTranslationParserHint): ParsedTranslationBundle;
 }
 
 // (No @packageDocumentation comment for this package)

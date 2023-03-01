@@ -16,9 +16,10 @@ class TestAstVisitor extends Visitor {
   override visitClassDeclaration(node: ts.ClassDeclaration):
       VisitListEntryResult<ts.Statement, ts.ClassDeclaration> {
     const name = node.name!.text;
-    const statics = node.members.filter(
-        member => (member.modifiers as ReadonlyArray<ts.Modifier>||
-                   []).some(mod => mod.kind === ts.SyntaxKind.StaticKeyword));
+    const statics = node.members.filter(member => {
+      const modifiers = ts.canHaveModifiers(member) ? ts.getModifiers(member) : undefined;
+      return (modifiers || []).some(mod => mod.kind === ts.SyntaxKind.StaticKeyword);
+    });
     const idStatic = statics.find(
                          el => ts.isPropertyDeclaration(el) && ts.isIdentifier(el.name) &&
                              el.name.text === 'id') as ts.PropertyDeclaration |

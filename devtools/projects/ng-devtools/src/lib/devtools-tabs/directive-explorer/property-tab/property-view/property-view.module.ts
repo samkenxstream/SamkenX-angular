@@ -12,8 +12,9 @@ import {NgModule} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {MatExpansionModule} from '@angular/material/expansion';
 import {MatIconModule} from '@angular/material/icon';
+import {MatLegacyButtonModule as MatButtonModule} from '@angular/material/legacy-button';
+import {MatLegacyTooltipModule as MatTooltipModule} from '@angular/material/legacy-tooltip';
 import {MatToolbarModule} from '@angular/material/toolbar';
-import {MatTooltipModule} from '@angular/material/tooltip';
 import {MatTreeModule} from '@angular/material/tree';
 
 import {PropertyEditorComponent} from './property-editor.component';
@@ -36,6 +37,7 @@ import {PropertyViewComponent} from './property-view.component';
   ],
   imports: [
     MatToolbarModule,
+    MatButtonModule,
     MatIconModule,
     MatTreeModule,
     MatTooltipModule,

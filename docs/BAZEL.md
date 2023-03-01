@@ -10,7 +10,7 @@ Bazel.
 ## Installation
 
 In order to ensure that everyone builds Angular in a _consistent_ way, Bazel
-will be installed through NPM and therefore it's not necessary to install Bazel
+will be installed through NPM. It's not necessary to install Bazel
 manually.
 
 The binaries for Bazel will be provided by the [`@bazel/bazelisk`](https://github.com/bazelbuild/bazelisk)
@@ -157,7 +157,7 @@ Of course, non-hermeticity in an action can cause problems.
 At worst, you can fetch a broken artifact from the cache, making your build non-reproducible.
 For this reason, we are careful to implement our Bazel rules to depend only on their inputs.
 
-Currently we only use remote caching on CircleCI and we let Angular core developers enable remote caching to speed up their builds.
+Currently, we only use remote caching on CircleCI. We let Angular core developers enable remote caching to speed up their builds.
 
 ### Remote cache in development
 
@@ -190,7 +190,7 @@ Contact Alex Eagle with questions.
 If a build seems slow you can use Bazel to diagnose where time is spent.
 
 The first step is to generate a profile of the build using the `--profile filename_name.profile` flag.
-```
+```sh
 yarn bazel build //packages/compiler --profile filename_name.profile
 ```
 
@@ -199,20 +199,20 @@ This will generate a `filename_name.profile` that you can then analyse using [an
 ## Using the console profile report
 
 You can obtain a simple report directly in the console by running:
-```
+```sh
 yarn bazel analyze-profile filename_name.profile
 ```
 
 This will show the phase summary, individual phase information and critical path.
 
 You can also list all individual tasks and the time they took using `--task_tree`.
-```
+```sh
 yarn bazel analyze-profile filename_name.profile --task_tree ".*"
 ```
 
 To show all tasks that take longer than a certain threshold, use the `--task_tree_threshold` flag.
 The default behavior is to use a 50ms threshold.
-```
+```sh
 yarn bazel analyze-profile filename_name.profile --task_tree ".*" --task_tree_threshold 5000
 ```
 
@@ -225,7 +225,7 @@ Compiling TypeScript shows as:
 
 To filter all tasks by TypeScript compilations that took more than 5 seconds, use:
 
-```
+```sh
 yarn bazel analyze-profile filename_name.profile --task_tree "Compiling TypeScript" --task_tree_threshold 5000
 ```
 
@@ -233,13 +233,13 @@ yarn bazel analyze-profile filename_name.profile --task_tree "Compiling TypeScri
 
 A more comprehensive way to visualize the profile information is through the HTML report:
 
-```
+```sh
 yarn bazel analyze-profile filename_name.profile --html --html_details --html_histograms
 ```
 
 This will generate a `filename_name.profile.html` file that you can open in your browser.
 
-On the upper right corner that is a small table of contents with links to three areas: Tasks, Legend and Statistics.
+In the upper right corner that is a small table of contents with links to three areas: Tasks, Legend, and Statistics.
 
 In the Tasks section you will find a graph of where time is spent. Legend shows what the colors in the Tasks graph mean.
 Hovering over the background will show what phase that is, while hovering over bars will show more details about that specific action.
@@ -283,7 +283,6 @@ e.g: `yarn bazel test packages/core/test/bundling/forms:symbol_test`
 #### mkdir missing
 If you see the following error::
 ```
-
 ERROR: An error occurred during the fetch of repository 'npm':
    Traceback (most recent call last):
         File "C:/users/anusername/_bazel_anusername/idexbm2i/external/build_bazel_rules_nodejs/internal/npm_install/npm_install.bzl", line 618, column 15, in _yarn_install_impl
@@ -291,7 +290,6 @@ ERROR: An error occurred during the fetch of repository 'npm':
         File "C:/users/anusername/_bazel_anusername/idexbm2i/external/build_bazel_rules_nodejs/internal/npm_install/npm_install.bzl", line 345, column 17, in _copy_file
                 fail("mkdir -p %s failed: \nSTDOUT:\n%s\nSTDERR:\n%s" % (dirname, result.stdout, result.stderr))
 Error in fail: mkdir -p _ failed:
-
 ```
 The `msys64` library and associated tools (like `mkdir`) are required to build Angular.
 
@@ -301,10 +299,9 @@ After that, a `git clean -xfd`, `yarn`, and `yarn build` should resolve this iss
 
 ### Xcode
 
-If you see the following error:
+If running `yarn bazel build packages/...` returns the following error:
 
 ```
-$ yarn bazel build packages/...
 ERROR: /private/var/tmp/[...]/external/local_config_cc/BUILD:50:5: in apple_cc_toolchain rule @local_config_cc//:cc-compiler-darwin_x86_64: Xcode version must be specified to use an Apple CROSSTOOL
 ERROR: Analysis of target '//packages/core/test/render3:render3' failed; build aborted: Analysis of target '@local_config_cc//:cc-compiler-darwin_x86_64' failed; build aborted
 ```
@@ -312,7 +309,7 @@ ERROR: Analysis of target '//packages/core/test/render3:render3' failed; build a
 It might be linked to an interaction with VSCode.
 If closing VSCode fixes the issue, you can add the following line to your VSCode configuration:
 
-```
+```json
 "files.exclude": {"bazel-*": true}
 ```
 
@@ -322,7 +319,7 @@ If VSCode is not the root cause, you might try:
 
 - Quit VSCode (make sure no VSCode is running).
 
-```
+```sh
 bazel clean --expunge
 sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 sudo xcodebuild -license

@@ -148,7 +148,7 @@ The binding punctuation of `[]`, `()`, `[()]`, and the prefix specify the direct
 
 *   Use `[]` to bind from source to view
 *   Use `()` to bind from view to source
-*   Use `[()]` to bind in a two way sequence of view to source to view
+*   Use `[()]` to bind in a two-way sequence of view to source to view
 
 Place the expression or statement to the right of the equal sign within double quote \(`""`\) characters.
 For more information see [Interpolation](guide/interpolation) and [Template statements](guide/template-statements).
@@ -162,7 +162,7 @@ The following table summarizes the targets for the different binding types.
 | Type      | Target                                                               | Examples |
 |:---       |:---                                                                  |:---      |
 | Property  | Element property <br /> Component property <br /> Directive property | `alt`, `src`, `hero`, and `ngClass` in the following: <code-example path="template-syntax/src/app/app.component.html" region="property-binding-syntax-1"></code-example> <!-- For more information, see [Property Binding](guide/property-binding). --> |
-| Event     | Elementevent <br /> Component event <br /> Directive event           | `click`, `deleteRequest`, and `myClick` in the following: <code-example path="template-syntax/src/app/app.component.html" region="event-binding-syntax-1"></code-example>                                                                               |
+| Event     | Element event <br /> Component event <br /> Directive event           | `click`, `deleteRequest`, and `myClick` in the following: <code-example path="template-syntax/src/app/app.component.html" region="event-binding-syntax-1"></code-example>                                                                               |
 | Two-way   | Event and property                                                   | <code-example path="template-syntax/src/app/app.component.html" region="2-way-binding-syntax-1"></code-example>                                                                                                                                         |
 | Attribute | Attribute \(the exception\)                                          | <code-example path="template-syntax/src/app/app.component.html" region="attribute-binding-syntax-1"></code-example>                                                                                                                                     |
 | Class     | `class` property                                                     | <code-example path="template-syntax/src/app/app.component.html" region="class-binding-syntax-1"></code-example>                                                                                                                                         |

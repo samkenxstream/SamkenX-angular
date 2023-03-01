@@ -54,7 +54,7 @@ export class AppComponent implements OnInit {
    */
   pageId: string;
   /**
-   * An HTML friendly identifer for the "folder" of the currently displayed page.
+   * An HTML friendly identifier for the "folder" of the currently displayed page.
    * This is computed by taking everything up to the first `/` in the `currentDocument.id`
    */
   folderId: string;
@@ -90,7 +90,7 @@ export class AppComponent implements OnInit {
 
   currentDocsVersionNode?: NavigationNode;
 
-  versionInfo: VersionInfo;
+  versionInfo: VersionInfo | undefined;
 
   get isOpened() { return this.dockSideNav && this.isSideNavDoc; }
   get mode() { return this.isOpened ? 'side' : 'over'; }

@@ -20,11 +20,13 @@ export class TypeScriptReflectionHost implements ReflectionHost {
   constructor(protected checker: ts.TypeChecker) {}
 
   getDecoratorsOfDeclaration(declaration: DeclarationNode): Decorator[]|null {
-    if (declaration.decorators === undefined || declaration.decorators.length === 0) {
-      return null;
-    }
-    return declaration.decorators.map(decorator => this._reflectDecorator(decorator))
-        .filter((dec): dec is Decorator => dec !== null);
+    const decorators =
+        ts.canHaveDecorators(declaration) ? ts.getDecorators(declaration) : undefined;
+
+    return decorators !== undefined && decorators.length ?
+        decorators.map(decorator => this._reflectDecorator(decorator))
+            .filter((dec): dec is Decorator => dec !== null) :
+        null;
   }
 
   getMembersOfClass(clazz: ClassDeclaration): ClassMember[] {
@@ -205,8 +207,9 @@ export class TypeScriptReflectionHost implements ReflectionHost {
     if (ts.isVariableDeclaration(decl) && ts.isVariableDeclarationList(decl.parent)) {
       topLevel = decl.parent.parent;
     }
-    if (topLevel.modifiers !== undefined &&
-        topLevel.modifiers.some(modifier => modifier.kind === ts.SyntaxKind.ExportKeyword)) {
+    const modifiers = ts.canHaveModifiers(topLevel) ? ts.getModifiers(topLevel) : undefined;
+    if (modifiers !== undefined &&
+        modifiers.some(modifier => modifier.kind === ts.SyntaxKind.ExportKeyword)) {
       // The node is part of a declaration that's directly exported.
       return true;
     }
@@ -427,8 +430,9 @@ export class TypeScriptReflectionHost implements ReflectionHost {
     }
 
     const decorators = this.getDecoratorsOfDeclaration(node);
-    const isStatic = node.modifiers !== undefined &&
-        node.modifiers.some(mod => mod.kind === ts.SyntaxKind.StaticKeyword);
+    const modifiers = ts.getModifiers(node);
+    const isStatic =
+        modifiers !== undefined && modifiers.some(mod => mod.kind === ts.SyntaxKind.StaticKeyword);
 
     return {
       node,
@@ -662,7 +666,8 @@ function getFarLeftIdentifier(propertyAccess: ts.PropertyAccessExpression): ts.I
  */
 function getContainingImportDeclaration(node: ts.Node): ts.ImportDeclaration|null {
   return ts.isImportSpecifier(node) ? node.parent!.parent!.parent! :
-                                      ts.isNamespaceImport(node) ? node.parent.parent : null;
+      ts.isNamespaceImport(node)    ? node.parent.parent :
+                                      null;
 }
 
 /**

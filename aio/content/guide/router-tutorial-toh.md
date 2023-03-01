@@ -19,16 +19,16 @@ Along the way, it highlights key features of the router such as:
 *   Navigating to a component \(*Heroes* link to "Heroes List"\)
 *   Including a route parameter \(passing the Hero `id` while routing to the "Hero Detail"\)
 *   Child routes \(the *Crisis Center* has its own routes\)
-*   The `CanActivate` guard \(checking route access\)
-*   The `CanActivateChild` guard \(checking child route access\)
-*   The `CanDeactivate` guard \(ask permission to discard unsaved changes\)
-*   The `Resolve` guard \(pre-fetching route data\)
+*   The `canActivate` guard \(checking route access\)
+*   The `canActivateChild` guard \(checking child route access\)
+*   The `canDeactivate` guard \(ask permission to discard unsaved changes\)
+*   The `resolve` guard \(pre-fetching route data\)
 *   Lazy loading an `NgModule`
-*   The `CanLoad` guard \(check before loading feature module assets\)
+*   The `canMatch` guard \(check before loading feature module assets\)
 
 This guide proceeds as a sequence of milestones as if you were building the application step-by-step, but assumes you are familiar with basic [Angular concepts](guide/architecture).
 For a general introduction to angular, see the [Getting Started](start).
-For a more in-depth overview, see the [Tour of Heroes](tutorial) tutorial.
+For a more in-depth overview, see the [Tour of Heroes](tutorial/tour-of-heroes) tutorial.
 
 ## Prerequisites
 
@@ -39,7 +39,7 @@ To complete this tutorial, you should have a basic understanding of the followin
 *   CSS
 *   [Angular CLI](cli)
 
-You might find the [Tour of Heroes tutorial](tutorial) helpful, but it is not required.
+You might find the [Tour of Heroes tutorial](tutorial/tour-of-heroes) helpful, but it is not required.
 
 ## The sample application in action
 
@@ -109,8 +109,8 @@ Click the browser back button or the "Heroes" link to activate a dialog.
 
 You can say "OK" and lose your changes or click "Cancel" and continue editing.
 
-Behind this behavior is the router's `CanDeactivate` guard.
-The guard gives you a chance to clean-up or ask the user's permission before navigating away from the current view.
+Behind this behavior is the router's `canDeactivate` guard.
+The guard gives you a chance to clean up or ask the user's permission before navigating away from the current view.
 
 The `Admin` and `Login` buttons illustrate other router capabilities covered later in the guide.
 
@@ -257,7 +257,7 @@ Because a wildcard route is the least specific route, place it last in the route
 
 </div>
 
-To test this feature, add a button with a `RouterLink` to the `HeroListComponent` template and set the link to a non-existant route called `"/sidekicks"`.
+To test this feature, add a button with a `RouterLink` to the `HeroListComponent` template and set the link to a non-existent route called `"/sidekicks"`.
 
 <code-example header="src/app/hero-list/hero-list.component.html (excerpt)" path="router/src/app/hero-list/hero-list.component.1.html"></code-example>
 
@@ -527,7 +527,7 @@ The application continues to work just the same, and you can use `AppRoutingModu
 
 The routing module, often called the `AppRoutingModule`, replaces the routing configuration in the root or feature module.
 
-The routing module is helpful as your application grows and when the configuration includes specialized guard and resolver services.
+The routing module is helpful as your application grows and when the configuration includes specialized guard and resolver functions.
 
 Some developers skip the routing module when the configuration is minimal and merge the routing configuration directly into the companion module \(for example, `AppModule`\).
 
@@ -547,7 +547,7 @@ This milestone covers the following:
 *   Navigating imperatively from one component to another
 *   Passing required and optional information in route parameters
 
-This sample application recreates the heroes feature in the "Services" section of the [Tour of Heroes tutorial](tutorial/toh-pt4 "Tour of Heroes: Services"), and reuses much of the code from the <live-example name="toh-pt4" title="Tour of Heroes: Services example code"></live-example>.
+This sample application recreates the heroes feature in the "Services" section of the [Tour of Heroes tutorial](tutorial/tour-of-heroes/toh-pt4 "Tour of Heroes: Services"), and reuses much of the code from the <live-example name="toh-pt4" title="Tour of Heroes: Services example code"></live-example>.
 
 A typical application has multiple feature areas, each dedicated to a particular business purpose with its own folder.
 
@@ -1647,7 +1647,7 @@ A guard's return value controls the router's behavior:
 <div class="alert is-helpful">
 
 **Note:** The guard can also tell the router to navigate elsewhere, effectively canceling the current navigation.
-When doing so inside a guard, the guard should return `UrlTree`;
+When doing so inside a guard, the guard should return `UrlTree`.
 
 </div>
 
@@ -1656,7 +1656,7 @@ But in many cases, the guard can't produce an answer synchronously.
 The guard could ask the user a question, save changes to the server, or fetch fresh data.
 These are all asynchronous operations.
 
-Accordingly, a routing guard can return an `Observable<boolean>` or a `Promise<boolean>` and the router will wait for the observable to resolve to `true` or `false`.
+Accordingly, a routing guard can return an `Observable<boolean>` or a `Promise<boolean>` and the router will wait for the observable or the promise to resolve to `true` or `false`.
 
 <div class="alert is-helpful">
 
@@ -1665,37 +1665,36 @@ The observable provided to the `Router` automatically completes after it retriev
 
 </div>
 
-The router supports multiple guard interfaces:
+The router supports multiple guard methods:
 
 | Guard interfaces                                  | Details |
 |:---                                               |:---     |
-| [`CanActivate`](api/router/CanActivate)           | To mediate navigation *to* a route                                  |
-| [`CanActivateChild`](api/router/CanActivateChild) | To mediate navigation *to* a child route                            |
-| [`CanDeactivate`](api/router/CanDeactivate)       | To mediate navigation *away* from the current route                 |
-| [`Resolve`](api/router/Resolve)                   | To perform route data retrieval *before* route activation           |
-| [`CanLoad`](api/router/CanLoad)                   | To mediate navigation *to* a feature module loaded *asynchronously* |
-| [`CanMatch`](api/router/CanMatch)                 | To control whether a `Route` should be used at all, even if the `path` matches the URL segment. |
+| [`canActivate`](api/router/CanActivateFn)           | To mediate navigation *to* a route                                  |
+| [`canActivateChild`](api/router/CanActivateChildFn) | To mediate navigation *to* a child route                            |
+| [`canDeactivate`](api/router/CanDeactivateFn)       | To mediate navigation *away* from the current route                 |
+| [`resolve`](api/router/ResolveFn)                   | To perform route data retrieval *before* route activation           |
+| [`canMatch`](api/router/CanMatchFn)                 | To control whether a `Route` should be used at all, even if the `path` matches the URL segment |
 
 You can have multiple guards at every level of a routing hierarchy.
-The router checks the `CanDeactivate` guards first, from the deepest child route to the top.
-Then it checks the `CanActivate` and `CanActivateChild` guards from the top down to the deepest child route.
-If the feature module is loaded asynchronously, the `CanLoad` guard is checked before the module is loaded.
+The router checks the `canDeactivate` guards first, from the deepest child route to the top.
+Then it checks the `canActivate` and `canActivateChild` guards from the top down to the deepest child route.
+If the feature module is loaded asynchronously, the `canMatch` guard is checked before the module is loaded.
 
-With the exception of `CanMatch`, if *any* guard returns false, pending guards that have not completed are canceled, and the entire navigation is canceled. If a `CanMatch` guard returns `false`, the `Router` continues
+With the exception of `canMatch`, if *any* guard returns false, pending guards that have not completed are canceled, and the entire navigation is canceled. If a `canMatch` guard returns `false`, the `Router` continues
 processing the rest of the `Routes` to see if a different `Route` config matches the URL. You can think of this 
-as though the `Router` is pretending the `Route` with the `CanMatch` guard did not exist.
+as though the `Router` is pretending the `Route` with the `canMatch` guard did not exist.
 
 There are several examples over the next few sections.
 
 <a id="can-activate-guard"></a>
 
-### `CanActivate`: requiring authentication
+### `canActivate`: requiring authentication
 
 Applications often restrict access to a feature area based on who the user is.
 You could permit access only to authenticated users or to users with a specific role.
 You might block or limit access until the user's account is activated.
 
-The `CanActivate` guard is the tool to manage these navigation business rules.
+The `canActivate` guard is the tool to manage these navigation business rules.
 
 #### Add an admin feature module
 
@@ -1857,19 +1856,21 @@ The new admin feature should be accessible only to authenticated users.
 
 Write a `canActivate()` guard method to redirect anonymous users to the login page when they try to enter the admin area.
 
-Generate an `AuthGuard` in the `auth` folder.
+Create a new file named `auth.guard.ts` in the `auth` folder. The `auth.guard.ts` file will contain the `authGuard` function.
 
+<!-- TODO(atscott): update schematics to generate functional guards
 <code-example format="shell" language="shell">
 
 ng generate guard auth/auth
 
 </code-example>
+ -->
 
-To demonstrate the fundamentals, this example only logs to the console, `returns` true immediately, and lets navigation proceed:
+To demonstrate the fundamentals, this example only logs to the console, returns `true` immediately, and lets navigation proceed:
 
 <code-example header="src/app/auth/auth.guard.ts (excerpt)" path="router/src/app/auth/auth.guard.1.ts"></code-example>
 
-Next, open `admin-routing.module.ts`, import the `AuthGuard` class, and
+Next, open `admin-routing.module.ts`, import the `authGuard` function, and
 update the admin route with a `canActivate` guard property that references it:
 
 <code-example header="src/app/admin/admin-routing.module.ts (guarded admin route)" path="router/src/app/admin/admin-routing.module.2.ts" region="admin-route"></code-example>
@@ -1878,11 +1879,11 @@ The admin feature is now protected by the guard, but the guard requires more cus
 
 <a id="teach-auth"></a>
 
-#### Authenticate with `AuthGuard`
+#### Authenticate with `authGuard`
 
-Make the `AuthGuard` mimic authentication.
+Make the `authGuard` mimic authentication.
 
-The `AuthGuard` should call an application service that can login a user and retain information about the current user.
+The `authGuard` should call an application service that can log in a user and retain information about the current user.
 Generate a new `AuthService` in the `auth` folder:
 
 <code-example format="shell" language="shell">
@@ -1905,19 +1906,13 @@ To keep things minimal, this example redirects unauthenticated users to `/admin`
 
 </div>
 
-Revise the `AuthGuard` to call the `AuthService`.
+Revise the `authGuard` to call the `AuthService`.
 
 <code-example header="src/app/auth/auth.guard.ts (v2)" path="router/src/app/auth/auth.guard.2.ts"></code-example>
 
-Notice that you inject the `AuthService` and the `Router` in the constructor.
-You haven't provided the `AuthService` yet but it's good to know that you can inject helpful services into routing guards.
-
-This guard returns a synchronous boolean result.
-If the user is logged in, it returns true and the navigation continues.
-
-The `ActivatedRouteSnapshot` contains the *future* route that will be activated and the `RouterStateSnapshot` contains the *future* `RouterState` of the application, should you pass through the guard check.
-
-If the user is not logged in, you store the attempted URL the user came from using the `RouterStateSnapshot.url` and tell the router to redirect to a login page &mdash; a page you haven't created yet.
+This guard returns a synchronous boolean result or a `UrlTree`.
+If the user is logged in, it returns `true` and the navigation continues.
+Otherwise, it redirects to a login page; a page you haven't created yet.
 Returning a `UrlTree` tells the `Router` to cancel the current navigation and schedule a new one to redirect the user.
 
 <a id="add-login-component"></a>
@@ -1934,8 +1929,8 @@ ng generate component auth/login
 
 </code-example>
 
-Register a `/login` route in the `auth/auth-routing.module.ts`.
-In `app.module.ts`, import and add the `AuthModule` to the `AppModule` imports.
+Register a `/login` route in the `auth/auth-routing.module.ts` file.
+In `app.module.ts`, import and add `AuthModule` to the `AppModule` imports array.
 
 <code-tabs>
     <code-pane header="src/app/app.module.ts" path="router/src/app/app.module.ts" region="auth"></code-pane>
@@ -1944,47 +1939,26 @@ In `app.module.ts`, import and add the `AuthModule` to the `AppModule` imports.
     <code-pane header="src/app/auth/auth.module.ts" path="router/src/app/auth/auth.module.ts"></code-pane>
 </code-tabs>
 
-<a id="can-match-guard"></a>
-
-### `CanMatch`: Controlling `Route` matching based on application conditions
-
-As an alternative to using a `CanActivate` guard which redirects the user to a new page if they do not have access, you can instead
-use a `CanMatch` guard to control whether the `Router` even attempts to activate a `Route`. This allows you to have
-multiple `Route` configurations which share the same `path` but are matched based on different conditions. In addition, this approach
-can allow the `Router` to match the wildcard `Route` instead.
-
-<code-example path="router/src/app/auth/auth.guard.2.ts" header="src/app/auth/auth.guard.ts (excerpt)" region="can-match"></code-example>
-
-<code-example path="router/src/app/admin/admin-routing.module.2.ts" header="src/app/admin/admin-routing.module.ts (guarded admin route)" region="can-match"></code-example>
 
 <a id="can-activate-child-guard"></a>
 
-### `CanActivateChild`: guarding child routes
+### `canActivateChild`: guarding child routes
 
-You can also protect child routes with the `CanActivateChild` guard.
-The `CanActivateChild` guard is similar to the `CanActivate` guard.
+You can also protect child routes with the `canActivateChild` guard.
+The `canActivateChild` guard is similar to the `canActivate` guard.
 The key difference is that it runs before any child route is activated.
 
 You protected the admin feature module from unauthorized access.
 You should also protect child routes *within* the feature module.
 
-Extend the `AuthGuard` to protect when navigating between the `admin` routes.
-Open `auth.guard.ts` and add the `CanActivateChild` interface to the imported tokens from the router package.
-
-Next, implement the `canActivateChild()` method which takes the same arguments as the `canActivate()` method: an `ActivatedRouteSnapshot` and `RouterStateSnapshot`.
-The `canActivateChild()` method can return an `Observable<boolean|UrlTree>` or `Promise<boolean|UrlTree>` for async checks and a `boolean` or `UrlTree` for sync checks.
-This one returns either `true` to let the user access the admin feature module or `UrlTree` to redirect the user to the login page instead:
-
-<code-example header="src/app/auth/auth.guard.ts (excerpt)" path="router/src/app/auth/auth.guard.3.ts" region="can-activate-child"></code-example>
-
-Add the same `AuthGuard` to the `component-less` admin route to protect all other child routes at one time
-instead of adding the `AuthGuard` to each route individually.
+Add the same `authGuard` to the `component-less` admin route to protect all other child routes at one time
+instead of adding the `authGuard` to each route individually.
 
 <code-example header="src/app/admin/admin-routing.module.ts (excerpt)" path="router/src/app/admin/admin-routing.module.3.ts" region="can-activate-child"></code-example>
 
 <a id="can-deactivate-guard"></a>
 
-### `CanDeactivate`: handling unsaved changes
+### `canDeactivate`: handling unsaved changes
 
 Back in the "Heroes" workflow, the application accepts every change to a hero immediately without validation.
 
@@ -1999,7 +1973,7 @@ If you let the user move to the next screen immediately and saving were to fail 
 
 You need to stop the navigation while you wait, asynchronously, for the server to return with its answer.
 
-The `CanDeactivate` guard helps you decide what to do with unsaved changes and how to proceed.
+The `canDeactivate` guard helps you decide what to do with unsaved changes and how to proceed.
 
 <a id="cancel-save"></a>
 
@@ -2039,24 +2013,26 @@ The `window.confirm` is a blocking action that displays a modal dialog and waits
 
 It returns an `Observable` that resolves when the user eventually decides what to do: either to discard changes and navigate away \(`true`\) or to preserve the pending changes and stay in the crisis editor \(`false`\).
 
-<a id="CanDeactivate"></a>
+<a id="canDeactivate"></a>
 
-Generate a guard that checks for the presence of a `canDeactivate()` method in a component &mdash;any component.
+Create a guard that checks for the presence of a `canDeactivate()` method in a component —any component.
 
+<!-- TODO: Update CLI schematic for guards
 <code-example format="shell" language="shell">
 
 ng generate guard can-deactivate
 
 </code-example>
+-->
 
 Paste the following code into your guard.
 
 <code-example header="src/app/can-deactivate.guard.ts" path="router/src/app/can-deactivate.guard.ts"></code-example>
 
-While the guard doesn't have to know which component has a deactivate method, it can detect that the `CrisisDetailComponent` component has the `canDeactivate()` method and call it.
+While the guard doesn't have to know which component has a `deactivate` method, it can detect that the `CrisisDetailComponent` component has the `canDeactivate()` method and call it.
 The guard not knowing the details of any component's deactivation method makes the guard reusable.
 
-Alternatively, you could make a component-specific `CanDeactivate` guard for the `CrisisDetailComponent`.
+Alternatively, you could make a component-specific `canDeactivate` guard for the `CrisisDetailComponent`.
 The `canDeactivate()` method provides you with the current instance of the `component`, the current `ActivatedRoute`, and `RouterStateSnapshot` in case you needed to access some external information.
 This would be useful if you only wanted to use this guard for this component and needed to get the component's properties or confirm whether the router should allow navigation away from it.
 
@@ -2100,32 +2076,34 @@ At the moment, the `CrisisDetailComponent` retrieves the selected crisis.
 If the crisis is not found, the router navigates back to the crisis list view.
 
 The experience might be better if all of this were handled first, before the route is activated.
-A `CrisisDetailResolver` service could retrieve a `Crisis` or navigate away, if the `Crisis` did not exist, *before* activating the route and creating the `CrisisDetailComponent`.
+A `crisisDetailResolver` could retrieve a `Crisis` or navigate away, if the `Crisis` did not exist, *before* activating the route and creating the `CrisisDetailComponent`.
 
-Generate a `CrisisDetailResolver` service file within the `Crisis Center` feature area.
+Create a `crisis-detail-resolver.ts` file within the `Crisis Center` feature area. This file will contain the `crisisDetailResolver` function.
 
+<!-- TODO: Update CLI schematic for resolvers
 <code-example format="shell" language="shell">
 
 ng generate service crisis-center/crisis-detail-resolver
 
 </code-example>
+ -->
 
-<code-example header="src/app/crisis-center/crisis-detail-resolver.service.ts (generated)" path="router/src/app/crisis-center/crisis-detail-resolver.service.1.ts"></code-example>
+<code-example header="src/app/crisis-center/crisis-detail-resolver.ts" path="router/src/app/crisis-center/crisis-detail-resolver.1.ts"></code-example>
 
-Move the relevant parts of the crisis retrieval logic in `CrisisDetailComponent.ngOnInit()` into the `CrisisDetailResolverService`.
+Move the relevant parts of the crisis retrieval logic in `CrisisDetailComponent.ngOnInit()` into the `crisisDetailResolver`.
 Import the `Crisis` model, `CrisisService`, and the `Router` so you can navigate elsewhere if you can't fetch the crisis.
 
-Be explicit and implement the `Resolve` interface with a type of `Crisis`.
+Be explicit and use the `ResolveFn` type with a type of `Crisis`.
 
-Inject the `CrisisService` and `Router` and implement the `resolve()` method.
+Inject the `CrisisService` and `Router`.
 That method could return a `Promise`, an `Observable`, or a synchronous return value.
 
 The `CrisisService.getCrisis()` method returns an observable in order to prevent the route from loading until the data is fetched.
 
 If it doesn't return a valid `Crisis`, then return an empty `Observable`, cancel the previous in-progress navigation to the `CrisisDetailComponent`, and navigate the user back to the `CrisisListComponent`.
-The updated resolver service looks like this:
+The updated resolver function looks like this:
 
-<code-example header="src/app/crisis-center/crisis-detail-resolver.service.ts" path="router/src/app/crisis-center/crisis-detail-resolver.service.ts"></code-example>
+<code-example header="src/app/crisis-center/crisis-detail-resolver.ts" path="router/src/app/crisis-center/crisis-detail-resolver.ts"></code-example>
 
 Import this resolver in the `crisis-center-routing.module.ts` and add a `resolve` object to the `CrisisDetailComponent` route configuration.
 
@@ -2139,10 +2117,7 @@ Update the `CrisisDetailComponent` to get the crisis from the  `ActivatedRoute.d
 
 Review the following three important points:
 
-1.  The router's `Resolve` interface is optional.
-    The `CrisisDetailResolverService` doesn't inherit from a base class.
-    The router looks for that method and calls it if found.
-
+1.  The router's `ResolveFn` is optional.
 1.  The router calls the resolver in any case where the user could navigate away so you don't have to code for each use case.
 1.  Returning an empty `Observable` in at least one resolver cancels navigation.
 
@@ -2157,7 +2132,7 @@ The relevant Crisis Center code for this milestone follows.
     <code-pane header="crisis-list.component.ts" path="router/src/app/crisis-center/crisis-list/crisis-list.component.ts"></code-pane>
     <code-pane header="crisis-detail.component.html" path="router/src/app/crisis-center/crisis-detail/crisis-detail.component.html"></code-pane>
     <code-pane header="crisis-detail.component.ts" path="router/src/app/crisis-center/crisis-detail/crisis-detail.component.ts"></code-pane>
-    <code-pane header="crisis-detail-resolver.service.ts" path="router/src/app/crisis-center/crisis-detail-resolver.service.ts"></code-pane>
+    <code-pane header="crisis-detail-resolver.ts" path="router/src/app/crisis-center/crisis-detail-resolver.ts"></code-pane>
     <code-pane header="crisis.service.ts" path="router/src/app/crisis-center/crisis.service.ts"></code-pane>
     <code-pane header="dialog.service.ts" path="router/src/app/dialog.service.ts"></code-pane>
 </code-tabs>
@@ -2179,7 +2154,7 @@ However, you can use query parameters to get optional parameters available to al
 
 [Fragments](https://en.wikipedia.org/wiki/Fragment_identifier) refer to certain elements on the page identified with an `id` attribute.
 
-Update the `AuthGuard` to provide a `session_id` query that remains after navigating to another route.
+Update the `authGuard` to provide a `session_id` query that remains after navigating to another route.
 
 Add an `anchor` element so you can jump to a certain point on the page.
 
@@ -2276,31 +2251,23 @@ The root `AppModule` must neither load nor reference the `AdminModule` or its fi
 
 In `app.module.ts`, remove the `AdminModule` import statement from the top of the file and remove the `AdminModule` from the NgModule's `imports` array.
 
-<a id="can-load-guard"></a>
+<a id="can-match-guard"></a>
 
-### `CanLoad`: guarding unauthorized loading of feature modules
+### `canMatch`: guarding unauthorized access of feature modules
 
-You're already protecting the `AdminModule` with a `CanActivate` guard that prevents unauthorized users from accessing the admin feature area.
+You're already protecting the `AdminModule` with a `canActivate` guard that prevents unauthorized users from accessing the admin feature area.
 It redirects to the login page if the user is not authorized.
 
 But the router is still loading the `AdminModule` even if the user can't visit any of its components.
 Ideally, you'd only load the `AdminModule` if the user is logged in.
 
-Add a `CanLoad` guard that only loads the `AdminModule` once the user is logged in *and* attempts to access the admin feature area.
+A `canMatch` guard controls whether the `Router` attempts to match a `Route`. This lets you have
+multiple `Route` configurations that share the same `path` but are matched based on different conditions. This approach
+allows the `Router` to match the wildcard `Route` instead.
 
-The existing `AuthGuard` already has the essential logic in its `checkLogin()` method to support the `CanLoad` guard.
+The existing `authGuard` contains the logic to support the `canMatch` guard.
 
-1.  Open `auth.guard.ts`.
-1.  Import the `CanLoad` interface from `@angular/router`.
-1.  Add it to the `AuthGuard` class's `implements` list.
-1.  Then implement `canLoad()` as follows:
-
-<code-example header="src/app/auth/auth.guard.ts (CanLoad guard)" path="router/src/app/auth/auth.guard.ts" region="canLoad"></code-example>
-
-The router sets the `canLoad()` method's `route` parameter to the intended destination URL.
-The `checkLogin()` method redirects to that URL once the user has logged in.
-
-Now import the `AuthGuard` into the `AppRoutingModule` and add the `AuthGuard` to the `canLoad` array property for the `admin` route.
+Finally, add the `authGuard` to the `canMatch` array property for the `admin` route.
 The completed admin route looks like this:
 
 <code-example header="app-routing.module.ts (lazy admin route)" path="router/src/app/app-routing.module.5.ts" region="admin"></code-example>
@@ -2378,19 +2345,6 @@ This configures the `Router` preloader to immediately load all lazy loaded route
 
 When you visit `http://localhost:4200`, the `/heroes` route loads immediately upon launch and the router starts loading the `CrisisCenterModule` right after the `HeroesModule` loads.
 
-Currently, the `AdminModule` does not preload because `CanLoad` is blocking it.
-
-<a id="preload-canload"></a>
-
-#### `CanLoad` blocks preload of children
-
-The `PreloadAllModules` strategy does not load feature areas protected by a [CanLoad](#can-load-guard) guard.
-
-You added a `CanLoad` guard to the route in the `AdminModule` a few steps back to block loading of that module until the user is authorized.
-That `CanLoad` guard takes precedence over the preload strategy for loading children routes.
-
-If you want to preload a module as well as guard against unauthorized access, remove the `canLoad()` guard method and rely on the [canActivate()](#can-activate-guard) guard alone.
-
 <a id="custom-preloading"></a>
 
 ### Custom Preloading Strategy
@@ -2428,9 +2382,11 @@ An implementation of `preload` must return an `Observable`.
 If the route does preload, it returns the observable returned by calling the loader function.
 If the route does not preload, it returns an `Observable` of `null`.
 
-In this sample, the  `preload()` method loads the route if the route's `data.preload` flag is truthy.
+In this sample, the  `preload()` method loads the route if the route's `data.preload` flag is truthy. We also skip loading the
+`Route` if there is a `canMatch` guard because the user might
+not have access to it.
 
-As a side-effect, `SelectivePreloadingStrategyService` logs the `path` of a selected route in its public `preloadedModules` array.
+As a side effect, `SelectivePreloadingStrategyService` logs the `path` of a selected route in its public `preloadedModules` array.
 
 Shortly, you'll extend the `AdminDashboardComponent` to inject this service and display its `preloadedModules` array.
 
@@ -2457,7 +2413,7 @@ It also logs to the browser's console.
 
 ### Migrating URLs with redirects
 
-You've setup the routes for navigating around your application and used navigation imperatively and declaratively.
+You've set up the routes for navigating around your application and used navigation imperatively and declaratively.
 But like any application, requirements change over time.
 You've setup links and navigation to `/heroes` and `/hero/:id` from the `HeroListComponent` and `HeroDetailComponent` components.
 If there were a requirement that links to `heroes` become `superheroes`, you would still want the previous URLs to navigate correctly.

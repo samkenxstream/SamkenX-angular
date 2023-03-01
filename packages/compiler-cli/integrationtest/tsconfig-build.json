@@ -3,9 +3,7 @@
     "alwaysCompileGeneratedCode": true,
     "annotationsAs": "static fields",
     "debug": true,
-    "enableSummariesForJit": true,
-    "i18nFormat": "xlf",
-    "enableIvy": false
+    "i18nFormat": "xlf"
   },
 
   "compilerOptions": {

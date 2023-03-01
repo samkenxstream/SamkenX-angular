@@ -121,14 +121,29 @@ export class TypeEmitter {
           // issue the literal is cloned and explicitly marked as synthesized by setting its text
           // range to a negative range, forcing TypeScript to determine the node's literal text from
           // the synthesized node's text instead of the incorrect source file.
-          const clone = ts.getMutableClone(node);
+          let clone: ts.LiteralExpression;
+
+          if (ts.isStringLiteral(node)) {
+            clone = ts.factory.createStringLiteral(node.text);
+          } else if (ts.isNumericLiteral(node)) {
+            clone = ts.factory.createNumericLiteral(node.text);
+          } else if (ts.isBigIntLiteral(node)) {
+            clone = ts.factory.createBigIntLiteral(node.text);
+          } else if (ts.isNoSubstitutionTemplateLiteral(node)) {
+            clone = ts.factory.createNoSubstitutionTemplateLiteral(node.text, node.rawText);
+          } else if (ts.isRegularExpressionLiteral(node)) {
+            clone = ts.factory.createRegularExpressionLiteral(node.text);
+          } else {
+            throw new Error(`Unsupported literal kind ${ts.SyntaxKind[node.kind]}`);
+          }
+
           ts.setTextRange(clone, {pos: -1, end: -1});
           return clone;
         } else {
           return ts.visitEachChild(node, visitNode, context);
         }
       };
-      return node => ts.visitNode(node, visitNode);
+      return node => ts.visitNode(node, visitNode, ts.isTypeNode);
     };
     return ts.transform(type, [typeReferenceTransformer]).transformed[0];
   }

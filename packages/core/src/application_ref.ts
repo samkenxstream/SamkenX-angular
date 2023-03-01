@@ -18,7 +18,7 @@ import {Console} from './console';
 import {Injectable} from './di/injectable';
 import {InjectionToken} from './di/injection_token';
 import {Injector} from './di/injector';
-import {ImportedNgModuleProviders, Provider, StaticProvider} from './di/interface/provider';
+import {EnvironmentProviders, Provider, StaticProvider} from './di/interface/provider';
 import {EnvironmentInjector} from './di/r3_injector';
 import {INJECTOR_SCOPE} from './di/scope';
 import {ErrorHandler} from './error_handler';
@@ -189,7 +189,7 @@ export function runPlatformInitializers(injector: Injector): void {
  */
 export function internalCreateApplication(config: {
   rootComponent?: Type<unknown>,
-  appProviders?: Array<Provider|ImportedNgModuleProviders>,
+  appProviders?: Array<Provider|EnvironmentProviders>,
   platformProviders?: Provider[],
 }): Promise<ApplicationRef> {
   const {rootComponent, appProviders, platformProviders} = config;
@@ -367,9 +367,11 @@ export interface BootstrapOptions {
    * Optionally specify coalescing event change detections or not.
    * Consider the following case.
    *
+   * ```
    * <div (click)="doSomething()">
    *   <button (click)="doSomethingElse()"></button>
    * </div>
+   * ```
    *
    * When button is clicked, because of the event bubbling, both
    * event handlers will be called and 2 change detections will be
@@ -389,12 +391,13 @@ export interface BootstrapOptions {
    * into a single change detection.
    *
    * Consider the following case.
-   *
+   * ```
    * for (let i = 0; i < 10; i ++) {
    *   ngZone.run(() => {
    *     // do something
    *   });
    * }
+   * ```
    *
    * This case triggers the change detection multiple times.
    * With ngZoneRunCoalescing options, all change detections in an event loop trigger only once.
@@ -1051,8 +1054,16 @@ export class ApplicationRef {
     this.tick();
     this.components.push(componentRef);
     // Get the listeners lazily to prevent DI cycles.
-    const listeners =
-        this._injector.get(APP_BOOTSTRAP_LISTENER, []).concat(this._bootstrapListeners);
+    const listeners = this._injector.get(APP_BOOTSTRAP_LISTENER, []);
+    if (ngDevMode && !Array.isArray(listeners)) {
+      throw new RuntimeError(
+          RuntimeErrorCode.INVALID_MULTI_PROVIDER,
+          'Unexpected type of the `APP_BOOTSTRAP_LISTENER` token value ' +
+              `(expected an array, but got ${typeof listeners}). ` +
+              'Please check that the `APP_BOOTSTRAP_LISTENER` token is configured as a ' +
+              '`multi: true` provider.');
+    }
+    listeners.push(...this._bootstrapListeners);
     listeners.forEach((listener) => listener(componentRef));
   }
 

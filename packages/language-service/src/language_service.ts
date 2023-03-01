@@ -17,7 +17,7 @@ import {isNamedClassDeclaration} from '@angular/compiler-cli/src/ngtsc/reflectio
 import {TypeCheckShimGenerator} from '@angular/compiler-cli/src/ngtsc/typecheck';
 import {OptimizeFor} from '@angular/compiler-cli/src/ngtsc/typecheck/api';
 import {findFirstMatchingNode} from '@angular/compiler-cli/src/ngtsc/typecheck/src/comments';
-import * as ts from 'typescript/lib/tsserverlibrary';
+import ts from 'typescript/lib/tsserverlibrary';
 
 import {GetComponentLocationsForTemplateResponse, GetTcbResponse, GetTemplateLocationForComponentResponse} from '../api';
 
@@ -307,7 +307,8 @@ export class LanguageService {
             return [];
           }
           return this.codeFixes.getCodeFixesAtPosition(
-              templateInfo, compiler, start, end, errorCodes, diags, formatOptions, preferences);
+              fileName, templateInfo, compiler, start, end, errorCodes, diags, formatOptions,
+              preferences);
         });
   }
 

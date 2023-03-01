@@ -11,8 +11,8 @@ import ts from 'typescript';
 import {ErrorCode, ngErrorCode} from '../../diagnostics';
 import {findFlatIndexEntryPoint, FlatIndexGenerator} from '../../entry_point';
 import {AbsoluteFsPath, resolve} from '../../file_system';
-import {FactoryGenerator, isShim, ShimAdapter, ShimReferenceTagger, SummaryGenerator} from '../../shims';
-import {FactoryTracker, PerFileShimGenerator, TopLevelShimGenerator} from '../../shims/api';
+import {isShim, ShimAdapter, ShimReferenceTagger} from '../../shims';
+import {PerFileShimGenerator, TopLevelShimGenerator} from '../../shims/api';
 import {TypeCheckShimGenerator} from '../../typecheck';
 import {normalizeSeparators} from '../../util/src/path';
 import {getRootDirs, isNonDeclarationTsPath, RequiredDelegations} from '../../util/src/typescript';
@@ -68,14 +68,22 @@ export class DelegatingCompilerHost implements
   useCaseSensitiveFileNames = this.delegateMethod('useCaseSensitiveFileNames');
   writeFile = this.delegateMethod('writeFile');
   getModuleResolutionCache = this.delegateMethod('getModuleResolutionCache');
+  hasInvalidatedResolutions = this.delegateMethod('hasInvalidatedResolutions');
+  // The following methods are required in TS 5.0+, but they don't exist in earlier versions.
+  // TODO(crisbeto): remove the `ts-ignore` when dropping support for TypeScript 4.9.
+  // @ts-ignore
+  resolveModuleNameLiterals = this.delegateMethod('resolveModuleNameLiterals');
+  resolveTypeReferenceDirectiveReferences =
+      // @ts-ignore
+      this.delegateMethod('resolveTypeReferenceDirectiveReferences');
 }
 
 /**
  * A wrapper around `ts.CompilerHost` (plus any extension methods from `ExtendedTsCompilerHost`).
  *
  * In order for a consumer to include Angular compilation in their TypeScript compiler, the
- * `ts.Program` must be created with a host that adds Angular-specific files (e.g. factories,
- * summaries, the template type-checking file, etc) to the compilation. `NgCompilerHost` is the
+ * `ts.Program` must be created with a host that adds Angular-specific files (e.g.
+ * the template type-checking file, etc) to the compilation. `NgCompilerHost` is the
  * host implementation which supports this.
  *
  * The interface implementations here ensure that `NgCompilerHost` fully delegates to
@@ -83,7 +91,6 @@ export class DelegatingCompilerHost implements
  */
 export class NgCompilerHost extends DelegatingCompilerHost implements
     RequiredDelegations<ExtendedTsCompilerHost>, ExtendedTsCompilerHost, NgCompilerAdapter {
-  readonly factoryTracker: FactoryTracker|null = null;
   readonly entryPoint: AbsoluteFsPath|null = null;
   readonly constructionDiagnostics: ts.Diagnostic[];
 
@@ -95,10 +102,9 @@ export class NgCompilerHost extends DelegatingCompilerHost implements
       delegate: ExtendedTsCompilerHost, inputFiles: ReadonlyArray<string>,
       rootDirs: ReadonlyArray<AbsoluteFsPath>, private shimAdapter: ShimAdapter,
       private shimTagger: ShimReferenceTagger, entryPoint: AbsoluteFsPath|null,
-      factoryTracker: FactoryTracker|null, diagnostics: ts.Diagnostic[]) {
+      diagnostics: ts.Diagnostic[]) {
     super(delegate);
 
-    this.factoryTracker = factoryTracker;
     this.entryPoint = entryPoint;
     this.constructionDiagnostics = diagnostics;
     this.inputFiles = [...inputFiles, ...shimAdapter.extraInputFiles];
@@ -143,33 +149,8 @@ export class NgCompilerHost extends DelegatingCompilerHost implements
   static wrap(
       delegate: ts.CompilerHost, inputFiles: ReadonlyArray<string>, options: NgCompilerOptions,
       oldProgram: ts.Program|null): NgCompilerHost {
-    // TODO(alxhub): remove the fallback to allowEmptyCodegenFiles after verifying that the rest of
-    // our build tooling is no longer relying on it.
-    const allowEmptyCodegenFiles = options.allowEmptyCodegenFiles || false;
-    const shouldGenerateFactoryShims = options.generateNgFactoryShims !== undefined ?
-        options.generateNgFactoryShims :
-        allowEmptyCodegenFiles;
-
-    const shouldGenerateSummaryShims = options.generateNgSummaryShims !== undefined ?
-        options.generateNgSummaryShims :
-        allowEmptyCodegenFiles;
-
-
     const topLevelShimGenerators: TopLevelShimGenerator[] = [];
     const perFileShimGenerators: PerFileShimGenerator[] = [];
-
-    if (shouldGenerateSummaryShims) {
-      // Summary generation.
-      perFileShimGenerators.push(new SummaryGenerator());
-    }
-
-    let factoryTracker: FactoryTracker|null = null;
-    if (shouldGenerateFactoryShims) {
-      const factoryGenerator = new FactoryGenerator();
-      perFileShimGenerators.push(factoryGenerator);
-
-      factoryTracker = factoryGenerator;
-    }
 
     const rootDirs = getRootDirs(delegate, options as ts.CompilerOptions);
 
@@ -221,8 +202,7 @@ export class NgCompilerHost extends DelegatingCompilerHost implements
     const shimTagger =
         new ShimReferenceTagger(perFileShimGenerators.map(gen => gen.extensionPrefix));
     return new NgCompilerHost(
-        delegate, inputFiles, rootDirs, shimAdapter, shimTagger, entryPoint, factoryTracker,
-        diagnostics);
+        delegate, inputFiles, rootDirs, shimAdapter, shimTagger, entryPoint, diagnostics);
   }
 
   /**

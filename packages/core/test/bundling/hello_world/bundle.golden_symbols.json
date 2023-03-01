@@ -18,10 +18,19 @@
     "name": "ApplicationRef"
   },
   {
+    "name": "BLOOM_BUCKET_BITS"
+  },
+  {
+    "name": "BLOOM_MASK"
+  },
+  {
     "name": "BrowserDomAdapter"
   },
   {
     "name": "CIRCULAR"
+  },
+  {
+    "name": "CONTAINER_HEADER_OFFSET"
   },
   {
     "name": "ComponentFactory"
@@ -36,6 +45,9 @@
     "name": "ComponentFactoryResolver2"
   },
   {
+    "name": "ComponentRef"
+  },
+  {
     "name": "ComponentRef2"
   },
   {
@@ -45,7 +57,13 @@
     "name": "ConnectableSubscriber"
   },
   {
+    "name": "DI_DECORATOR_FLAG"
+  },
+  {
     "name": "DOCUMENT2"
+  },
+  {
+    "name": "DomAdapter"
   },
   {
     "name": "EMPTY_ARRAY"
@@ -60,6 +78,9 @@
     "name": "ENVIRONMENT_INITIALIZER"
   },
   {
+    "name": "ERROR_ORIGINAL_ERROR"
+  },
+  {
     "name": "ElementRef"
   },
   {
@@ -70,6 +91,12 @@
   },
   {
     "name": "EventEmitter"
+  },
+  {
+    "name": "GenericBrowserDomAdapter"
+  },
+  {
+    "name": "HAS_TRANSPLANTED_VIEWS"
   },
   {
     "name": "HelloWorldModule"
@@ -99,6 +126,15 @@
     "name": "LifecycleHooksFeature"
   },
   {
+    "name": "MONKEY_PATCH_KEY_NAME"
+  },
+  {
+    "name": "MOVED_VIEWS"
+  },
+  {
+    "name": "MapOperator"
+  },
+  {
     "name": "MapSubscriber"
   },
   {
@@ -108,6 +144,9 @@
     "name": "MergeMapSubscriber"
   },
   {
+    "name": "NATIVE"
+  },
+  {
     "name": "NEW_LINE"
   },
   {
@@ -115,6 +154,9 @@
   },
   {
     "name": "NG_ELEMENT_ID"
+  },
+  {
+    "name": "NG_ENV_ID"
   },
   {
     "name": "NG_FACTORY_DEF"
@@ -135,6 +177,15 @@
     "name": "NG_PROV_DEF"
   },
   {
+    "name": "NG_TEMPLATE_SELECTOR"
+  },
+  {
+    "name": "NG_TEMP_TOKEN_PATH"
+  },
+  {
+    "name": "NG_TOKEN_PATH"
+  },
+  {
     "name": "NOT_FOUND"
   },
   {
@@ -147,7 +198,19 @@
     "name": "NO_CHANGE"
   },
   {
+    "name": "NO_NEW_LINE"
+  },
+  {
+    "name": "NO_PARENT_INJECTOR"
+  },
+  {
     "name": "NULL_INJECTOR"
+  },
+  {
+    "name": "NgModuleFactory"
+  },
+  {
+    "name": "NgModuleFactory2"
   },
   {
     "name": "NgModuleRef"
@@ -195,13 +258,28 @@
     "name": "RefCountSubscriber"
   },
   {
+    "name": "RendererFactory2"
+  },
+  {
+    "name": "RootViewRef"
+  },
+  {
     "name": "RuntimeError"
+  },
+  {
+    "name": "SIMPLE_CHANGES_STORE"
+  },
+  {
+    "name": "SOURCE"
   },
   {
     "name": "SafeSubscriber"
   },
   {
     "name": "Sanitizer"
+  },
+  {
+    "name": "SimpleChange"
   },
   {
     "name": "SimpleInnerSubscriber"
@@ -234,6 +312,9 @@
     "name": "TRACKED_LVIEWS"
   },
   {
+    "name": "TYPE"
+  },
+  {
     "name": "USE_VALUE"
   },
   {
@@ -244,6 +325,9 @@
   },
   {
     "name": "ViewEncapsulation"
+  },
+  {
+    "name": "ViewRef"
   },
   {
     "name": "_DOM"
@@ -264,6 +348,9 @@
     "name": "_global"
   },
   {
+    "name": "_icuContainerIterate"
+  },
+  {
     "name": "_injectImplementation"
   },
   {
@@ -271,6 +358,9 @@
   },
   {
     "name": "_wrapInTimeout"
+  },
+  {
+    "name": "addPropertyAlias"
   },
   {
     "name": "allocExpando"
@@ -321,7 +411,13 @@
     "name": "config"
   },
   {
+    "name": "configureViewWithDirective"
+  },
+  {
     "name": "connectableObservableDescriptor"
+  },
+  {
+    "name": "convertToBitFlags"
   },
   {
     "name": "createElementRef"
@@ -351,7 +447,16 @@
     "name": "deepForEach"
   },
   {
+    "name": "deepForEachProvider"
+  },
+  {
     "name": "detachMovedView"
+  },
+  {
+    "name": "detectChangesInternal"
+  },
+  {
+    "name": "diPublicInInjector"
   },
   {
     "name": "empty"
@@ -450,6 +555,9 @@
     "name": "getOrCreateInjectable"
   },
   {
+    "name": "getOrCreateNodeInjectorForNode"
+  },
+  {
     "name": "getOrCreateTNode"
   },
   {
@@ -480,7 +588,7 @@
     "name": "getSimpleChangesStore"
   },
   {
-    "name": "getSymbolIterator2"
+    "name": "getSymbolIterator"
   },
   {
     "name": "getTNodeFromLView"
@@ -528,6 +636,9 @@
     "name": "internalImportProvidersFrom"
   },
   {
+    "name": "invokeHostBindingsInCreationMode"
+  },
+  {
     "name": "isArray"
   },
   {
@@ -537,10 +648,10 @@
     "name": "isComponentDef"
   },
   {
-    "name": "isFunction"
+    "name": "isEnvironmentProviders"
   },
   {
-    "name": "isImportedNgModuleProviders"
+    "name": "isFunction"
   },
   {
     "name": "isInlineTemplate"
@@ -594,6 +705,12 @@
     "name": "maybeWrapInNotSelector"
   },
   {
+    "name": "mergeHostAttribute"
+  },
+  {
+    "name": "mergeHostAttrs"
+  },
+  {
     "name": "mergeMap"
   },
   {
@@ -633,10 +750,10 @@
     "name": "processInjectorTypesWithProviders"
   },
   {
-    "name": "promise"
+    "name": "profiler"
   },
   {
-    "name": "readPatchedLView"
+    "name": "promise"
   },
   {
     "name": "refCount"
@@ -654,9 +771,6 @@
     "name": "refreshView"
   },
   {
-    "name": "registerHostBindingOpCodes"
-  },
-  {
     "name": "rememberChangeHistoryAndInvokeOnChangesHook"
   },
   {
@@ -667,9 +781,6 @@
   },
   {
     "name": "renderComponent"
-  },
-  {
-    "name": "renderComponentOrTemplate"
   },
   {
     "name": "renderView"
@@ -684,6 +795,9 @@
     "name": "rxSubscriber"
   },
   {
+    "name": "saveNameToExportMap"
+  },
+  {
     "name": "scheduleArray"
   },
   {
@@ -691,6 +805,9 @@
   },
   {
     "name": "setBindingRootForHostBindings"
+  },
+  {
+    "name": "setCurrentDirectiveIndex"
   },
   {
     "name": "setCurrentInjector"

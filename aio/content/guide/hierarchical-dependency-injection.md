@@ -21,7 +21,6 @@ This topic uses the following pictographs.
 
 </div>
 
-The applications you build with Angular can become quite large, and one way to manage this complexity is to split up the application into many small well encapsulated modules, that are by themselves split up into a well-defined tree of components.
 The applications you build with Angular can become quite large, and one way to manage this complexity is to split up the application into many small well-encapsulated modules, that are by themselves split up into a well-defined tree of components.
 
 There can be sections of your page that works in a completely independent way than the rest of the application, with its own local copies of the services and other dependencies that it needs. Some of the services that these sections of the application use might be shared with other parts of the application, or with parent components that are further up in the component tree, while other dependencies are meant to be private.
@@ -303,7 +302,7 @@ Components are used in your templates, as in the following example:
 Usually, you declare the components and their templates in separate files.
 For the purposes of understanding how the injection system works, it is useful to look at them from the point of view of a combined logical tree.
 The term _logical_ distinguishes it from the render tree, which is your application's DOM tree.
-To mark the locations of where the component templates are located, this guide uses the `<#VIEW>` pseudo element, which doesn't actually exist in the render tree and is present for mental model purposes only.
+To mark the locations of where the component templates are located, this guide uses the `<#VIEW>` pseudo-element, which doesn't actually exist in the render tree and is present for mental model purposes only.
 
 </div>
 
@@ -637,13 +636,18 @@ The `AnimalService` in the logical tree would look like this:
             &commat;Inject(AnimalService=&gt;"&#x1F436;")&gt;
         &lt;!-- ^^using viewProviders means AnimalService is available in &lt;#VIEW&gt;--&gt;
         &lt;p&gt;Emoji from AnimalService: {{animal.emoji}} (&#x1F436;)&lt;/p&gt;
-        &lt;app-inspector&gt;
-          &lt;p&gt;Emoji from AnimalService: {{animal.emoji}} (&#x1F436;)&lt;/p&gt;
-        &lt;/app-inspector&gt;
+  
+        &lt;div class="container"&gt;
+          &lt;h3&gt;Content projection&lt;/h3&gt;
+          &lt;app-inspector &commat;Inject(AnimalService) animal=&gt;"&#x1F433;"&gt;
+            &lt;p&gt;Emoji from AnimalService: {{animal.emoji}} (&#x1F433;)&lt;/p&gt;
+          &lt;/app-inspector&gt;
+        &lt;/div&gt;
+  
       &lt;/#VIEW&gt;
       &lt;app-inspector&gt;
         &lt;#VIEW&gt;
-          &lt;p&gt;Emoji from AnimalService: {{animal.emoji}} (&#x1F433;)&lt;/p&gt;
+          &lt;p&gt;Emoji from AnimalService: {{animal.emoji}} (&#x1F436;)&lt;/p&gt;
         &lt;/#VIEW&gt;
       &lt;/app-inspector&gt;
     &lt;/app-child&gt;
@@ -737,7 +741,7 @@ The example application uses `@Optional()` so the application does not throw an 
 The `<app-child>` currently provides the `AnimalService` in the `viewProviders` array with the value of dog <code>&#x1F436;</code>.
 Because the injector has only to look at the `ElementInjector` of the `<app-child>` for the `AnimalService`, it never sees the whale <code>&#x1F433;</code>.
 
-As in the `FlowerService` example, if you add `@SkipSelf()` to the constructor for the `AnimalService`, the injector won't look in the  `ElementInjector` oh the current `<app-child>` for the `AnimalService`.
+As in the `FlowerService` example, if you add `@SkipSelf()` to the constructor for the `AnimalService`, the injector won't look in the  `ElementInjector` or the current `<app-child>` for the `AnimalService`.
 
 <code-example format="typescript" language="typescript">
 
@@ -896,7 +900,7 @@ Instead, you can provide the `VillainsService` in the `providers` metadata of th
 
 <code-example header="src/app/villains-list.component.ts (metadata)" path="hierarchical-dependency-injection/src/app/villains-list.component.ts" region="metadata"></code-example>
 
-By providing `VillainsService` in the `VillainsListComponent` metadata and nowhere else, the service becomes available only in the `VillainsListComponent` and its sub-component tree.
+By providing `VillainsService` in the `VillainsListComponent` metadata and nowhere else, the service becomes available only in the `VillainsListComponent` and its subcomponent tree.
 
 `VillainService` is a singleton with respect to `VillainsListComponent` because that is where it is declared.
 As long as `VillainsListComponent` does not get destroyed it will be the same instance of `VillainService` but if there are multiple instances of `VillainsListComponent`, then each instance of `VillainsListComponent` will have its own instance of `VillainService`.
@@ -972,7 +976,7 @@ The root injector, marked as \(A\), uses *generic* providers for details about `
 
 2. Child component \(B\). Component \(B\) defines its own, *specialized* providers for `CarService` and `EngineService` that have special capabilities suitable for what's going on in component \(B\).
 
-3. Child component \(C\) as a childe of Component \(B\). Component \(C\) defines its own, even *more specialized* provider for `CarService`.
+3. Child component \(C\) as a child of Component \(B\). Component \(C\) defines its own, even *more specialized* provider for `CarService`.
 
 <div class="lightbox">
 

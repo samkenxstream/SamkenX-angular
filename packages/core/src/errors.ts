@@ -32,7 +32,7 @@ export const enum RuntimeErrorCode {
   INJECTOR_ALREADY_DESTROYED = 205,
   PROVIDER_IN_WRONG_CONTEXT = 207,
   MISSING_INJECTION_TOKEN = 208,
-  INVALID_MULTI_PROVIDER = 209,
+  INVALID_MULTI_PROVIDER = -209,
 
   // Template Errors
   MULTIPLE_COMPONENTS_MATCH = -300,
@@ -42,12 +42,18 @@ export const enum RuntimeErrorCode {
   UNKNOWN_ELEMENT = 304,
   TEMPLATE_STRUCTURE_ERROR = 305,
   INVALID_EVENT_BINDING = 306,
+  HOST_DIRECTIVE_UNRESOLVABLE = 307,
+  HOST_DIRECTIVE_NOT_STANDALONE = 308,
+  DUPLICATE_DIRECTITVE = 309,
+  HOST_DIRECTIVE_COMPONENT = 310,
+  HOST_DIRECTIVE_UNDEFINED_BINDING = 311,
+  HOST_DIRECTIVE_CONFLICTING_ALIAS = 312,
 
   // Bootstrap Errors
   MULTIPLE_PLATFORMS = 400,
   PLATFORM_NOT_FOUND = 401,
   ERROR_HANDLER_NOT_FOUND = 402,
-  BOOTSTRAP_COMPONENTS_NOT_FOUND = 403,
+  BOOTSTRAP_COMPONENTS_NOT_FOUND = -403,
   PLATFORM_ALREADY_DESTROYED = 404,
   ASYNC_INITIALIZERS_STILL_RUNNING = 405,
   APPLICATION_REF_ALREADY_DESTROYED = 406,
@@ -76,6 +82,7 @@ export const enum RuntimeErrorCode {
   TYPE_IS_NOT_STANDALONE = 907,
   MISSING_ZONEJS = 908,
   UNEXPECTED_ZONE_STATE = 909,
+  UNSAFE_IFRAME_ATTRS = -910,
 }
 
 /**
@@ -107,6 +114,7 @@ export function formatRuntimeError<T extends number = RuntimeErrorCode>(
     code: T, message: null|false|string): string {
   // Error code might be a negative number, which is a special marker that instructs the logic to
   // generate a link to the error details page on angular.io.
+  // We also prepend `0` to non-compile-time errors.
   const fullCode = `NG0${Math.abs(code)}`;
 
   let errorMessage = `${fullCode}${message ? ': ' + message.trim() : ''}`;

@@ -7,6 +7,7 @@ workspace(
 )
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("//:yarn.bzl", "YARN_LABEL")
 
 # Add a patch fix for rules_webtesting v0.3.5 required for enabling runfiles on Windows.
 # TODO: Remove the http_archive for this transitive dependency when a release is cut
@@ -24,8 +25,13 @@ http_archive(
 
 http_archive(
     name = "build_bazel_rules_nodejs",
-    sha256 = "c78216f5be5d451a42275b0b7dc809fb9347e2b04a68f68bad620a2b01f5c774",
-    urls = ["https://github.com/bazelbuild/rules_nodejs/releases/download/5.5.2/rules_nodejs-5.5.2.tar.gz"],
+    patches = [
+        # TODO(devversion): remove when https://github.com/bazelbuild/rules_nodejs/pull/3605 is available.
+        "//tools:bazel-repo-patches/rules_nodejs__#3605.patch",
+        "//tools/esm-interop:patches/bazel/nodejs_binary_esm_support.patch",
+    ],
+    sha256 = "c29944ba9b0b430aadcaf3bf2570fece6fc5ebfb76df145c6cdad40d65c20811",
+    urls = ["https://github.com/bazelbuild/rules_nodejs/releases/download/5.7.0/rules_nodejs-5.7.0.tar.gz"],
 )
 
 load("@build_bazel_rules_nodejs//:repositories.bzl", "build_bazel_rules_nodejs_dependencies")
@@ -46,9 +52,9 @@ http_archive(
 # Fetch Aspect lib for utilities like write_source_files
 http_archive(
     name = "aspect_bazel_lib",
-    sha256 = "5f5f1237601d41d61608ad0b9541614935839232940010f9e62163c3e53dc1b7",
-    strip_prefix = "bazel-lib-0.5.0",
-    url = "https://github.com/aspect-build/bazel-lib/archive/refs/tags/v0.5.0.tar.gz",
+    sha256 = "4b2e774387bae6242879820086b7b738d49bf3d0659522ea5d9363be01a27582",
+    strip_prefix = "bazel-lib-1.23.2",
+    url = "https://github.com/aspect-build/bazel-lib/archive/refs/tags/v1.23.2.tar.gz",
 )
 
 # Setup the Node.js toolchain.
@@ -56,7 +62,7 @@ load("@rules_nodejs//nodejs:repositories.bzl", "nodejs_register_toolchains")
 
 nodejs_register_toolchains(
     name = "nodejs",
-    node_version = "16.10.0",
+    node_version = "16.13.0",
 )
 
 # Download npm dependencies.
@@ -68,11 +74,14 @@ yarn_install(
     # Note that we add the postinstall scripts here so that the dependencies are re-installed
     # when the postinstall patches are modified.
     data = [
-        "//:.yarn/releases/yarn-1.22.17.cjs",
+        YARN_LABEL,
         "//:.yarnrc",
-        "//:scripts/puppeteer-chromedriver-versions.js",
-        "//:scripts/webdriver-manager-update.js",
         "//tools:postinstall-patches.js",
+        "//tools/esm-interop:patches/npm/@angular+build-tooling+0.0.0-e859696da7af56c811b6589f1ae888222d93d797.patch",
+        "//tools/esm-interop:patches/npm/@bazel+concatjs+5.8.1.patch",
+        "//tools/esm-interop:patches/npm/@bazel+esbuild+5.7.1.patch",
+        "//tools/esm-interop:patches/npm/@bazel+protractor+5.7.1.patch",
+        "//tools/esm-interop:patches/npm/rxjs+6.6.7.patch",
     ],
     # Currently disabled due to:
     #  1. Missing Windows support currently.
@@ -83,7 +92,7 @@ yarn_install(
     # We prefer to symlink the `node_modules` to only maintain a single install.
     # See https://github.com/angular/dev-infra/pull/446#issuecomment-1059820287 for details.
     symlink_node_modules = True,
-    yarn = "//:.yarn/releases/yarn-1.22.17.cjs",
+    yarn = YARN_LABEL,
     yarn_lock = "//:yarn.lock",
 )
 
@@ -92,8 +101,9 @@ yarn_install(
     # Note that we add the postinstall scripts here so that the dependencies are re-installed
     # when the postinstall patches are modified.
     data = [
-        "//:.yarn/releases/yarn-1.22.17.cjs",
+        YARN_LABEL,
         "//:.yarnrc",
+        "//aio:tools/cli-patches/bazel-architect-output.patch",
         "//aio:tools/cli-patches/patch.js",
     ],
     # Currently disabled due to:
@@ -105,8 +115,32 @@ yarn_install(
     # We prefer to symlink the `node_modules` to only maintain a single install.
     # See https://github.com/angular/dev-infra/pull/446#issuecomment-1059820287 for details.
     symlink_node_modules = True,
-    yarn = "//:.yarn/releases/yarn-1.22.17.cjs",
+    yarn = YARN_LABEL,
     yarn_lock = "//aio:yarn.lock",
+)
+
+yarn_install(
+    name = "aio_example_deps",
+    # Rename the default js_library target from "node_modules" as this obscures the
+    # the source directory stamped as a filegroup in the manual BUILD contents below.
+    all_node_modules_target_name = "node_modules_all",
+    data = [
+        YARN_LABEL,
+        "//:.yarnrc",
+    ],
+    # Disabled because, when False, yarn_install preserves the node_modules folder
+    # with bin symlinks in the external repository. This is needed to link the shared
+    # set of deps for example e2es.
+    exports_directories_only = False,
+    manual_build_file_contents = """\
+filegroup(
+    name = "node_modules_files",
+    srcs = ["node_modules"],
+)
+""",
+    package_json = "//aio/tools/examples/shared:package.json",
+    yarn = YARN_LABEL,
+    yarn_lock = "//aio/tools/examples/shared:yarn.lock",
 )
 
 load("@aspect_bazel_lib//lib:repositories.bzl", "aspect_bazel_lib_dependencies")
@@ -158,10 +192,10 @@ cldr_xml_data_repository(
 # sass rules
 http_archive(
     name = "io_bazel_rules_sass",
-    sha256 = "85b34f2e5e227aa586b6e0fd6942262e17b3cface596891eeef5a29a0b7467e3",
-    strip_prefix = "rules_sass-697e5a08bdd39aee49f2c6f4eb621ef59e677e49",
+    sha256 = "78efa335c53253ed5c2b731bce8e654922c92f9f49337f9ee63b275c61989b33",
+    strip_prefix = "rules_sass-1f277900101a3d057392df55b2d6f332df34087a",
     urls = [
-        "https://github.com/bazelbuild/rules_sass/archive/697e5a08bdd39aee49f2c6f4eb621ef59e677e49.zip",
+        "https://github.com/bazelbuild/rules_sass/archive/1f277900101a3d057392df55b2d6f332df34087a.zip",
     ],
 )
 
@@ -169,5 +203,13 @@ http_archive(
 load("@io_bazel_rules_sass//sass:sass_repositories.bzl", "sass_repositories")
 
 sass_repositories(
-    yarn_script = "//:.yarn/releases/yarn-1.22.17.cjs",
+    yarn_script = YARN_LABEL,
+)
+
+# Register git toolchains
+register_toolchains(
+    "@npm//@angular/build-tooling/bazel/git-toolchain:git_linux_toolchain",
+    "@npm//@angular/build-tooling/bazel/git-toolchain:git_macos_x86_toolchain",
+    "@npm//@angular/build-tooling/bazel/git-toolchain:git_macos_arm64_toolchain",
+    "@npm//@angular/build-tooling/bazel/git-toolchain:git_windows_toolchain",
 )

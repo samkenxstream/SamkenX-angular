@@ -21,7 +21,7 @@ The categories of Angular documentation include:
 
 | Angular documentation categories | Details |
 |:---                              |:---     |
-| [Guides](docs)                   | Much of what's in the [documentation section of angular.io](docs). Guides walk the reader step-by-step through tasks to demonstrate concepts and are often accompanied by a working example. These include [Getting Started](start), [Tour of Heroes](tutorial), and pages about [Forms](guide/forms-overview), [Dependency Injection](guide/dependency-injection), and [HttpClient](guide/http). Contributing members of the community and Angular team members maintain this documentation in [Markdown](https://daringfireball.net/projects/markdown/syntax "Markdown"). |
+| [Guides](docs)                   | Much of what's in the [documentation section of angular.io](docs). Guides walk the reader step-by-step through tasks to demonstrate concepts and are often accompanied by a working example. These include [Getting Started](start), [Tour of Heroes](tutorial/tour-of-heroes), and pages about [Forms](guide/forms-overview), [Dependency Injection](guide/dependency-injection), and [HttpClient](guide/http). Contributing members of the community and Angular team members maintain this documentation in [Markdown](https://daringfireball.net/projects/markdown/syntax "Markdown"). |
 | [API documentation](api)         | Reference documents for the [Angular Application Programming Interface, or API](api). These are more succinct than guides and serve as a reference for Angular features. They are especially helpful for people already acquainted with Angular concepts. The [angular.io](https://angular.io) infrastructure generates these documents from source code and comments that contributors edit.                                                                                                                                                                               |
 | [CLI documentation](cli)         | The [angular.io](https://angular.io) infrastructure generates these documents from CLI source code.                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 
@@ -328,24 +328,6 @@ Following convention, set the `header` attribute to the file's location within t
 
 Unless otherwise commented, all code snippets in this page are from sample source code located in the `content/examples/docs-style-guide` directory.
 
-<div class="alert is-important">
-
-The documentation tooling reports an error if the file identified in the path does not exist or is in the [`.git-ignore` file](https://github.com/angular/angular/blob/main/aio/content/examples/.gitignore).
-Most `.js` files are in `.git-ignore`.
-
-To include an ignored code file in your project and display it in a guide, remove it from `.git-ignore`.
-Update the `content/examples/.gitignore` as follows:
-
-<code-example header="content/examples/.gitignore">
-
-&num; my-guide
-!my-guide/src/something.js
-!my-guide/more-javascript*.js
-
-</code-example>
-
-</div>
-
 <a id="region"></a>
 
 ### Displaying part of a code file
@@ -577,7 +559,7 @@ Use `#docregion` in source files to mark code for use in `<code-example>` or `<c
 The `#docregion` comment begins a code snippet region.
 Every line of code after that comment belongs in the region until the code fragment processor encounters the end of the file or a closing `#enddocregion`.
 
-The following `src/main.ts` is a an example of a file with a single `#docregion` at the top of the file.
+The following `src/main.ts` is an example of a file with a single `#docregion` at the top of the file.
 
 <code-example header="src/main.ts" path="docs-style-guide/src/main.ts"></code-example>
 
@@ -1391,7 +1373,7 @@ A subsection with **Markdown** formatted text.
 
 For specific language and grammar usage, a word list, style, tone, and formatting recommendations, see the [Google Developer Documentation Style Guide](https://developers.google.com/style).
 
-If you have any questions that this style guide doesn't answer or you would like to discuss documentation styles visit the [Angular repo](https://github.com/angular/angular) and [file a documentation issue](https://github.com/angular/angular/issues/new/choose).
+If you have any questions that this style guide doesn't answer or you would like to discuss documentation styles, see the [Angular repo](https://github.com/angular/angular) and [file a documentation issue](https://github.com/angular/angular/issues/new/choose).
 
 <!-- links -->
 

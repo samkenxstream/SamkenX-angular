@@ -8,6 +8,8 @@
 
 
 export {ɵEmptyOutletComponent} from './components/empty_outlet';
-export {assignExtraOptionsToRouter as ɵassignExtraOptionsToRouter, RestoredState as ɵRestoredState} from './router';
-export {providePreloading as ɵprovidePreloading, ROUTER_PROVIDERS as ɵROUTER_PROVIDERS} from './router_module';
+export {RestoredState as ɵRestoredState} from './navigation_transition';
+export {withPreloading as ɵwithPreloading} from './provide_router';
+export {ROUTER_PROVIDERS as ɵROUTER_PROVIDERS} from './router_module';
 export {flatten as ɵflatten} from './utils/collection';
+export {afterNextNavigation as ɵafterNextNavigation} from './utils/navigations';

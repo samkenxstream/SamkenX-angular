@@ -6,7 +6,7 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {EnvironmentInjector, NgModuleRef} from '@angular/core';
+import {EnvironmentInjector} from '@angular/core';
 import {TestBed} from '@angular/core/testing';
 
 import {Routes} from '../src/models';
@@ -408,46 +408,43 @@ describe('recognize', async () => {
         expect((c as any)._lastPathIndex).toBe(0);
       });
 
-      it('should set url segment and index properly with the "corrected" option for nested empty-path segments',
-         async () => {
-           const url = tree('a/b');
-           const s = await recognize(
-               [{
-                 path: 'a',
-                 children: [{
-                   path: 'b',
-                   component: ComponentB,
-                   children: [{
-                     path: '',
-                     component: ComponentC,
-                     children: [{path: '', component: ComponentD}]
-                   }]
-                 }]
-               }],
-               'a/b', 'emptyOnly', 'corrected');
-           expect((s.root as any)._urlSegment.toString()).toEqual(url.root.toString());
-           expect((s.root as any)._lastPathIndex).toBe(-1);
+      it('should set url segment and index properly for nested empty-path segments', async () => {
+        const url = tree('a/b');
+        const s = await recognize(
+            [{
+              path: 'a',
+              children: [{
+                path: 'b',
+                component: ComponentB,
+                children: [
+                  {path: '', component: ComponentC, children: [{path: '', component: ComponentD}]}
+                ]
+              }]
+            }],
+            'a/b', 'emptyOnly');
+        expect((s.root as any)._urlSegment.toString()).toEqual(url.root.toString());
+        expect((s.root as any)._lastPathIndex).toBe(-1);
 
-           const a = s.root.firstChild!;
-           expect((a as any)._urlSegment.toString())
-               .toEqual(url.root.children[PRIMARY_OUTLET].toString());
-           expect((a as any)._lastPathIndex).toBe(0);
+        const a = s.root.firstChild!;
+        expect((a as any)._urlSegment.toString())
+            .toEqual(url.root.children[PRIMARY_OUTLET].toString());
+        expect((a as any)._lastPathIndex).toBe(0);
 
-           const b = a.firstChild!;
-           expect((b as any)._urlSegment.toString())
-               .toEqual(url.root.children[PRIMARY_OUTLET].toString());
-           expect((b as any)._lastPathIndex).toBe(1);
+        const b = a.firstChild!;
+        expect((b as any)._urlSegment.toString())
+            .toEqual(url.root.children[PRIMARY_OUTLET].toString());
+        expect((b as any)._lastPathIndex).toBe(1);
 
-           const c = b.firstChild!;
-           expect((c as any)._urlSegment.toString())
-               .toEqual(url.root.children[PRIMARY_OUTLET].toString());
-           expect((c as any)._lastPathIndex).toBe(1);
+        const c = b.firstChild!;
+        expect((c as any)._urlSegment.toString())
+            .toEqual(url.root.children[PRIMARY_OUTLET].toString());
+        expect((c as any)._lastPathIndex).toBe(1);
 
-           const d = c.firstChild!;
-           expect((d as any)._urlSegment.toString())
-               .toEqual(url.root.children[PRIMARY_OUTLET].toString());
-           expect((d as any)._lastPathIndex).toBe(1);
-         });
+        const d = c.firstChild!;
+        expect((d as any)._urlSegment.toString())
+            .toEqual(url.root.children[PRIMARY_OUTLET].toString());
+        expect((d as any)._lastPathIndex).toBe(1);
+      });
 
       it('should set url segment and index properly when nested empty-path segments (2)',
          async () => {
@@ -658,7 +655,7 @@ describe('recognize', async () => {
                              children: [{path: 'b', component: ComponentB}],
                            },
                          ],
-                         tree('/b'), '/b', 'emptyOnly', 'corrected', new DefaultUrlSerializer())
+                         tree('/b'), '/b', 'emptyOnly', new DefaultUrlSerializer())
                          .recognize()
                          .toPromise();
            expect(s).toBeNull();
@@ -784,7 +781,7 @@ describe('recognize', async () => {
     it('should work with terminal route', async () => {
       const matcher = (s: any, g: any, r: any) => s.length === 0 ? ({consumed: s}) : null;
 
-      const s = await recognize([{matcher, component: ComponentA}] as any, '');
+      const s = await recognize([{matcher, component: ComponentA}], '');
       const a = s.root.firstChild!;
       checkActivatedRoute(a, '', {}, ComponentA);
     });
@@ -793,8 +790,7 @@ describe('recognize', async () => {
       const matcher = (s: any, g: any, r: any) => s.length === 0 ? ({consumed: s}) : null;
 
       const s = await recognize(
-          [{path: 'a', component: ComponentA, children: [{matcher, component: ComponentB}]}] as any,
-          'a');
+          [{path: 'a', component: ComponentA, children: [{matcher, component: ComponentB}]}], 'a');
       const a = s.root.firstChild!;
       checkActivatedRoute(a, 'a', {}, ComponentA);
     });
@@ -830,12 +826,12 @@ describe('recognize', async () => {
 });
 
 async function recognize(
-    config: Routes, url: string, paramsInheritanceStrategy: 'emptyOnly'|'always' = 'emptyOnly',
-    relativeLinkResolution: 'legacy'|'corrected' = 'legacy'): Promise<RouterStateSnapshot> {
+    config: Routes, url: string,
+    paramsInheritanceStrategy: 'emptyOnly'|'always' = 'emptyOnly'): Promise<RouterStateSnapshot> {
   const serializer = new DefaultUrlSerializer();
   const result = await new Recognizer(
                      TestBed.inject(EnvironmentInjector), RootComponent, config, tree(url), url,
-                     paramsInheritanceStrategy, relativeLinkResolution, serializer)
+                     paramsInheritanceStrategy, serializer)
                      .recognize()
                      .toPromise();
   expect(result).not.toBeNull();
@@ -850,7 +846,7 @@ function checkActivatedRoute(
   } else {
     expect(actual.url.map(s => s.path).join('/')).toEqual(url);
     expect(actual.params).toEqual(params);
-    expect(actual.component as any).toBe(cmp);
+    expect(actual.component).toBe(cmp);
     expect(actual.outlet).toEqual(outlet);
   }
 }

@@ -7,7 +7,6 @@
  */
 
 import {Tree} from '@angular-devkit/schematics';
-import {existsSync, readFileSync} from 'fs';
 import {dirname, relative, resolve} from 'path';
 import ts from 'typescript';
 
@@ -55,11 +54,13 @@ export class NgComponentTemplateVisitor {
   }
 
   private visitClassDeclaration(node: ts.ClassDeclaration) {
-    if (!node.decorators || !node.decorators.length) {
+    const decorators = ts.getDecorators(node);
+
+    if (!decorators || !decorators.length) {
       return;
     }
 
-    const ngDecorators = getAngularDecorators(this.typeChecker, node.decorators);
+    const ngDecorators = getAngularDecorators(this.typeChecker, decorators);
     const componentDecorator = ngDecorators.find(dec => dec.name === 'Component');
 
     // In case no "@Component" decorator could be found on the current class, skip.

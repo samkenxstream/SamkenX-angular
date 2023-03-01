@@ -137,13 +137,12 @@ function decoratorToMetadata(
   }
   // Decorators have a type.
   const properties: ts.ObjectLiteralElementLike[] = [
-    ts.factory.createPropertyAssignment('type', ts.getMutableClone(decorator.identifier)),
+    ts.factory.createPropertyAssignment('type', decorator.identifier),
   ];
   // Sometimes they have arguments.
   if (decorator.args !== null && decorator.args.length > 0) {
     const args = decorator.args.map(arg => {
-      const expr = ts.getMutableClone(arg);
-      return wrapFunctionsInParens ? wrapFunctionExpressionsInParens(expr) : expr;
+      return wrapFunctionsInParens ? wrapFunctionExpressionsInParens(arg) : arg;
     });
     properties.push(
         ts.factory.createPropertyAssignment('args', ts.factory.createArrayLiteralExpression(args)));
@@ -166,12 +165,12 @@ function isAngularDecorator(decorator: Decorator, isCore: boolean): boolean {
  * taken from one place any emitted to another one exactly as it has been written.
  */
 function removeIdentifierReferences<T extends ts.Node>(node: T, name: string): T {
-  const result = ts.transform(
-      node, [context => root => ts.visitNode(root, function walk(current: ts.Node): ts.Node {
-        return ts.isIdentifier(current) && current.text === name ?
-            ts.factory.createIdentifier(current.text) :
-            ts.visitEachChild(current, walk, context);
-      })]);
+  const result =
+      ts.transform(node, [context => root => ts.visitNode(root, function walk(current: ts.Node): T {
+                     return (ts.isIdentifier(current) && current.text === name ?
+                                 ts.factory.createIdentifier(current.text) :
+                                 ts.visitEachChild(current, walk, context)) as T;
+                   }) as T]);
 
   return result.transformed[0];
 }

@@ -98,7 +98,7 @@ class DtsTransformer {
     };
 
     // Recursively scan through the AST and process all nodes as desired.
-    sf = ts.visitNode(sf, visitor);
+    sf = ts.visitNode(sf, visitor, ts.isSourceFile) || sf;
 
     // Add new imports for this file.
     return addImports(imports, sf);
@@ -142,7 +142,6 @@ class DtsTransformer {
     if (elementsChanged && clazz === newClazz) {
       newClazz = ts.factory.updateClassDeclaration(
           /* node */ clazz,
-          /* decorators */ clazz.decorators,
           /* modifiers */ clazz.modifiers,
           /* name */ clazz.name,
           /* typeParameters */ clazz.typeParameters,
@@ -195,7 +194,6 @@ export class IvyDeclarationDtsTransform implements DtsTransform {
       const typeRef = translateType(decl.type, imports);
       markForEmitAsSingleLine(typeRef);
       return ts.factory.createPropertyDeclaration(
-          /* decorators */ undefined,
           /* modifiers */ modifiers,
           /* name */ decl.name,
           /* questionOrExclamationToken */ undefined,
@@ -205,7 +203,6 @@ export class IvyDeclarationDtsTransform implements DtsTransform {
 
     return ts.factory.updateClassDeclaration(
         /* node */ clazz,
-        /* decorators */ clazz.decorators,
         /* modifiers */ clazz.modifiers,
         /* name */ clazz.name,
         /* typeParameters */ clazz.typeParameters,

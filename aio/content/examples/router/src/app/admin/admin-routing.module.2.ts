@@ -4,7 +4,7 @@ import {NgModule} from '@angular/core';
 import {RouterModule, Routes} from '@angular/router';
 
 // #docregion admin-route
-import {AuthGuard} from '../auth/auth.guard';
+import {authGuard} from '../auth/auth.guard';
 
 import {AdminDashboardComponent} from './admin-dashboard/admin-dashboard.component';
 import {AdminComponent} from './admin/admin.component';
@@ -14,12 +14,9 @@ import {ManageHeroesComponent} from './manage-heroes/manage-heroes.component';
 const adminRoutes: Routes = [{
   path: 'admin',
   component: AdminComponent,
-  canActivate: [AuthGuard],
+  canActivate: [authGuard],
 
   // #enddocregion admin-route
-  // #docregion can-match
-  canMatch: [AuthGuard],
-  // #enddocregion can-match
   // #docregion admin-route
   children: [{
     path: '',
@@ -29,7 +26,7 @@ const adminRoutes: Routes = [{
       {path: '', component: AdminDashboardComponent}
     ],
     // #enddocregion admin-route
-    canActivateChild: [AuthGuard]
+    canActivateChild: [authGuard]
     // #docregion admin-route
   }]
 }];

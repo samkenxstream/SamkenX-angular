@@ -7,7 +7,7 @@
  */
 
 import {ErrorCode, ngErrorCode} from '@angular/compiler-cli/src/ngtsc/diagnostics';
-import * as ts from 'typescript/lib/tsserverlibrary';
+import ts from 'typescript/lib/tsserverlibrary';
 
 import {LanguageService} from '../../src/language_service';
 
@@ -34,7 +34,6 @@ describe('language service adapter', () => {
   describe('parse compiler options', () => {
     it('should initialize with angularCompilerOptions from tsconfig.json', () => {
       expect(ngLS.getCompilerOptions()).toEqual(jasmine.objectContaining({
-        enableIvy: true,  // default for ivy is true
         strictTemplates: true,
         strictInjectionParameters: true,
       }));
@@ -42,7 +41,6 @@ describe('language service adapter', () => {
 
     it('should reparse angularCompilerOptions on tsconfig.json change', () => {
       expect(ngLS.getCompilerOptions()).toEqual(jasmine.objectContaining({
-        enableIvy: true,  // default for ivy is true
         strictTemplates: true,
         strictInjectionParameters: true,
       }));
@@ -66,7 +64,6 @@ describe('language service adapter', () => {
 
       // First make sure the default for strictTemplates is true
       expect(ngLS.getCompilerOptions()).toEqual(jasmine.objectContaining({
-        enableIvy: true,  // default for ivy is true
         strictTemplates: true,
         strictInjectionParameters: true,
       }));

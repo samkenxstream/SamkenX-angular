@@ -6,7 +6,6 @@ export const release: ReleaseConfig = {
   representativeNpmPackage: '@angular/core',
   npmPackages: [
     {name: '@angular/animations'},
-    {name: '@angular/bazel'},
     {name: '@angular/common'},
     {name: '@angular/compiler'},
     {name: '@angular/compiler-cli'},
@@ -31,5 +30,5 @@ export const release: ReleaseConfig = {
   releaseNotes: {
     hiddenScopes: ['aio', 'bazel', 'dev-infra', 'docs-infra', 'zone.js', 'devtools'],
   },
-  releasePrLabels: ['comp: build & ci', 'action: merge', 'PullApprove: disable'],
+  releasePrLabels: ['area: build & ci', 'action: merge', 'PullApprove: disable'],
 };

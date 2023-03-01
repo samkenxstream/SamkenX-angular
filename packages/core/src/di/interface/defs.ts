@@ -9,7 +9,7 @@
 import {Type} from '../../interface/type';
 import {getClosureSafeProperty} from '../../util/property';
 
-import {ClassProvider, ConstructorProvider, ExistingProvider, FactoryProvider, StaticClassProvider, ValueProvider} from './provider';
+import {ClassProvider, ConstructorProvider, EnvironmentProviders, ExistingProvider, FactoryProvider, StaticClassProvider, ValueProvider} from './provider';
 
 
 
@@ -73,7 +73,7 @@ export interface ɵɵInjectorDef<T> {
   // TODO(alxhub): Narrow down the type here once decorators properly change the return type of the
   // class they are decorating (to add the ɵprov property for example).
   providers: (Type<any>|ValueProvider|ExistingProvider|FactoryProvider|ConstructorProvider|
-              StaticClassProvider|ClassProvider|any[])[];
+              StaticClassProvider|ClassProvider|EnvironmentProviders|any[])[];
 
   imports: (InjectorType<any>|InjectorTypeWithProviders<any>)[];
 }
@@ -119,7 +119,7 @@ export interface InjectorType<T> extends Type<T> {
 export interface InjectorTypeWithProviders<T> {
   ngModule: InjectorType<T>;
   providers?: (Type<any>|ValueProvider|ExistingProvider|FactoryProvider|ConstructorProvider|
-               StaticClassProvider|ClassProvider|any[])[];
+               StaticClassProvider|ClassProvider|EnvironmentProviders|any[])[];
 }
 
 
@@ -215,13 +215,12 @@ export function getInheritedInjectableDef<T>(type: any): ɵɵInjectableDeclarati
 
   if (def) {
     const typeName = getTypeName(type);
-    // TODO(FW-1307): Re-add ngDevMode when closure can handle it
-    // ngDevMode &&
-    console.warn(
-        `DEPRECATED: DI is instantiating a token "${
-            typeName}" that inherits its @Injectable decorator but does not provide one itself.\n` +
-        `This will become an error in a future version of Angular. Please add @Injectable() to the "${
-            typeName}" class.`);
+    ngDevMode &&
+        console.warn(
+            `DEPRECATED: DI is instantiating a token "${
+                typeName}" that inherits its @Injectable decorator but does not provide one itself.\n` +
+            `This will become an error in a future version of Angular. Please add @Injectable() to the "${
+                typeName}" class.`);
     return def;
   } else {
     return null;

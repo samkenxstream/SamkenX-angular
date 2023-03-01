@@ -10,6 +10,10 @@ Currently, Angular supports the following extended diagnostics:
 
 *   [NG8101 - `invalidBananaInBox`](extended-diagnostics/NG8101)
 *   [NG8102 - `nullishCoalescingNotNullable`](extended-diagnostics/NG8102)
+*   [NG8103 - `missingControlFlowDirective`](extended-diagnostics/NG8103)
+*   [NG8105 - `missingNgForOfLet`](extended-diagnostics/NG8105)
+*   [NG8106 - `suffixNotSupported`](extended-diagnostics/NG8106)
+*   [NG8104 - `textAttributeNotBinding`](extended-diagnostics/NG8104)
 
 ## Configuration
 
@@ -72,7 +76,7 @@ Extended diagnostics should generally:
 *   Detect a common, non-obvious developer mistake with Angular templates
 *   Clearly articulate why this pattern can lead to bugs or unintended behavior
 *   Suggest one or more clear solutions
-*   Have a low \(preferrably zero\) false-positive rate
+*   Have a low, preferably zero, false-positive rate
 *   Apply to the vast majority of Angular applications \(not specific to an unofficial library\)
 *   Improve program correctness or performance \(not style, that responsibility falls to a linter\)
 

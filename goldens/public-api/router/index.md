@@ -11,12 +11,11 @@ import { ComponentFactoryResolver } from '@angular/core';
 import { ComponentRef } from '@angular/core';
 import { ElementRef } from '@angular/core';
 import { EnvironmentInjector } from '@angular/core';
+import { EnvironmentProviders } from '@angular/core';
 import { EventEmitter } from '@angular/core';
 import * as i0 from '@angular/core';
-import { ImportedNgModuleProviders } from '@angular/core';
 import { InjectionToken } from '@angular/core';
 import { Injector } from '@angular/core';
-import { Location as Location_2 } from '@angular/common';
 import { LocationStrategy } from '@angular/common';
 import { ModuleWithProviders } from '@angular/core';
 import { NgModuleFactory } from '@angular/core';
@@ -25,13 +24,13 @@ import { OnChanges } from '@angular/core';
 import { OnDestroy } from '@angular/core';
 import { OnInit } from '@angular/core';
 import { Provider } from '@angular/core';
+import { ProviderToken } from '@angular/core';
 import { QueryList } from '@angular/core';
 import { Renderer2 } from '@angular/core';
 import { SimpleChanges } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { Type } from '@angular/core';
 import { Version } from '@angular/core';
-import { ViewContainerRef } from '@angular/core';
 
 // @public
 export class ActivatedRoute {
@@ -74,7 +73,7 @@ export class ActivatedRouteSnapshot {
     queryParams: Params;
     get root(): ActivatedRouteSnapshot;
     readonly routeConfig: Route | null;
-    readonly title?: string;
+    get title(): string | undefined;
     // (undocumented)
     toString(): string;
     url: UrlSegment[];
@@ -113,13 +112,13 @@ export abstract class BaseRouteReuseStrategy implements RouteReuseStrategy {
     store(route: ActivatedRouteSnapshot, detachedTree: DetachedRouteHandle): void;
 }
 
-// @public
+// @public @deprecated
 export interface CanActivate {
     // (undocumented)
     canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree;
 }
 
-// @public
+// @public @deprecated
 export interface CanActivateChild {
     // (undocumented)
     canActivateChild(childRoute: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree;
@@ -131,25 +130,25 @@ export type CanActivateChildFn = (childRoute: ActivatedRouteSnapshot, state: Rou
 // @public
 export type CanActivateFn = (route: ActivatedRouteSnapshot, state: RouterStateSnapshot) => Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree;
 
-// @public
+// @public @deprecated
 export interface CanDeactivate<T> {
     // (undocumented)
-    canDeactivate(component: T, currentRoute: ActivatedRouteSnapshot, currentState: RouterStateSnapshot, nextState?: RouterStateSnapshot): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree;
+    canDeactivate(component: T, currentRoute: ActivatedRouteSnapshot, currentState: RouterStateSnapshot, nextState: RouterStateSnapshot): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree;
 }
 
 // @public
-export type CanDeactivateFn<T> = (component: T, currentRoute: ActivatedRouteSnapshot, currentState: RouterStateSnapshot, nextState?: RouterStateSnapshot) => Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree;
+export type CanDeactivateFn<T> = (component: T, currentRoute: ActivatedRouteSnapshot, currentState: RouterStateSnapshot, nextState: RouterStateSnapshot) => Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree;
 
-// @public
+// @public @deprecated
 export interface CanLoad {
     // (undocumented)
     canLoad(route: Route, segments: UrlSegment[]): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree;
 }
 
-// @public
+// @public @deprecated
 export type CanLoadFn = (route: Route, segments: UrlSegment[]) => Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree;
 
-// @public
+// @public @deprecated
 export interface CanMatch {
     // (undocumented)
     canMatch(route: Route, segments: UrlSegment[]): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree;
@@ -211,6 +210,14 @@ export type Data = {
 };
 
 // @public
+export type DebugTracingFeature = RouterFeature<RouterFeatureKind.DebugTracingFeature>;
+
+// @public
+export interface DefaultExport<T> {
+    default: T;
+}
+
+// @public
 export class DefaultTitleStrategy extends TitleStrategy {
     constructor(title: Title);
     // (undocumented)
@@ -231,11 +238,20 @@ export class DefaultUrlSerializer implements UrlSerializer {
     serialize(tree: UrlTree): string;
 }
 
+// @public @deprecated
+export type DeprecatedGuard = ProviderToken<any> | any;
+
 // @public
 export type DetachedRouteHandle = {};
 
 // @public
-type Event_2 = RouterEvent | NavigationStart | NavigationEnd | NavigationCancel | NavigationError | RoutesRecognized | GuardsCheckStart | GuardsCheckEnd | RouteConfigLoadStart | RouteConfigLoadEnd | ChildActivationStart | ChildActivationEnd | ActivationStart | ActivationEnd | Scroll | ResolveStart | ResolveEnd;
+export type DisabledInitialNavigationFeature = RouterFeature<RouterFeatureKind.DisabledInitialNavigationFeature>;
+
+// @public
+export type EnabledBlockingInitialNavigationFeature = RouterFeature<RouterFeatureKind.EnabledBlockingInitialNavigationFeature>;
+
+// @public
+type Event_2 = NavigationStart | NavigationEnd | NavigationCancel | NavigationError | RoutesRecognized | GuardsCheckStart | GuardsCheckEnd | RouteConfigLoadStart | RouteConfigLoadEnd | ChildActivationStart | ChildActivationEnd | ActivationStart | ActivationEnd | Scroll | ResolveStart | ResolveEnd | NavigationSkipped;
 export { Event_2 as Event }
 
 // @public
@@ -259,6 +275,8 @@ export const enum EventType {
     // (undocumented)
     NavigationError = 3,
     // (undocumented)
+    NavigationSkipped = 16,
+    // (undocumented)
     NavigationStart = 0,
     // (undocumented)
     ResolveEnd = 6,
@@ -275,21 +293,15 @@ export const enum EventType {
 }
 
 // @public
-export interface ExtraOptions {
-    anchorScrolling?: 'disabled' | 'enabled';
-    canceledNavigationResolution?: 'replace' | 'computed';
+export interface ExtraOptions extends InMemoryScrollingOptions, RouterConfigOptions {
     enableTracing?: boolean;
-    errorHandler?: ErrorHandler;
-    initialNavigation?: InitialNavigation;
-    malformedUriErrorHandler?: (error: URIError, urlSerializer: UrlSerializer, url: string) => UrlTree;
-    onSameUrlNavigation?: 'reload' | 'ignore';
-    paramsInheritanceStrategy?: 'emptyOnly' | 'always';
-    preloadingStrategy?: any;
     // @deprecated
-    relativeLinkResolution?: 'legacy' | 'corrected';
+    errorHandler?: (error: any) => any;
+    initialNavigation?: InitialNavigation;
+    // @deprecated
+    malformedUriErrorHandler?: (error: URIError, urlSerializer: UrlSerializer, url: string) => UrlTree;
+    preloadingStrategy?: any;
     scrollOffset?: [number, number] | (() => [number, number]);
-    scrollPositionRestoration?: 'disabled' | 'enabled' | 'top';
-    urlUpdateStrategy?: 'deferred' | 'eager';
     useHash?: boolean;
 }
 
@@ -334,6 +346,18 @@ export class GuardsCheckStart extends RouterEvent {
 export type InitialNavigation = 'disabled' | 'enabledBlocking' | 'enabledNonBlocking';
 
 // @public
+export type InitialNavigationFeature = EnabledBlockingInitialNavigationFeature | DisabledInitialNavigationFeature;
+
+// @public
+export type InMemoryScrollingFeature = RouterFeature<RouterFeatureKind.InMemoryScrollingFeature>;
+
+// @public
+export interface InMemoryScrollingOptions {
+    anchorScrolling?: 'disabled' | 'enabled';
+    scrollPositionRestoration?: 'disabled' | 'enabled' | 'top';
+}
+
+// @public
 export interface IsActiveMatchOptions {
     fragment: 'exact' | 'ignored';
     matrixParams: 'exact' | 'subset' | 'ignored';
@@ -345,7 +369,32 @@ export interface IsActiveMatchOptions {
 export type LoadChildren = LoadChildrenCallback;
 
 // @public
-export type LoadChildrenCallback = () => Type<any> | NgModuleFactory<any> | Routes | Observable<Type<any> | Routes> | Promise<NgModuleFactory<any> | Type<any> | Routes>;
+export type LoadChildrenCallback = () => Type<any> | NgModuleFactory<any> | Routes | Observable<Type<any> | Routes | DefaultExport<Type<any>> | DefaultExport<Routes>> | Promise<NgModuleFactory<any> | Type<any> | Routes | DefaultExport<Type<any>> | DefaultExport<Routes>>;
+
+// @public
+export function mapToCanActivate(providers: Array<Type<{
+    canActivate: CanActivateFn;
+}>>): CanActivateFn[];
+
+// @public
+export function mapToCanActivateChild(providers: Array<Type<{
+    canActivateChild: CanActivateChildFn;
+}>>): CanActivateChildFn[];
+
+// @public
+export function mapToCanDeactivate<T = unknown>(providers: Array<Type<{
+    canDeactivate: CanDeactivateFn<T>;
+}>>): CanDeactivateFn<T>[];
+
+// @public
+export function mapToCanMatch(providers: Array<Type<{
+    canMatch: CanMatchFn;
+}>>): CanMatchFn[];
+
+// @public
+export function mapToResolve<T>(provider: Type<{
+    resolve: ResolveFn<T>;
+}>): ResolveFn<T>;
 
 // @public
 export interface Navigation {
@@ -360,6 +409,7 @@ export interface Navigation {
 
 // @public
 export interface NavigationBehaviorOptions {
+    onSameUrlNavigation?: Extract<OnSameUrlNavigation, 'reload'>;
     replaceUrl?: boolean;
     skipLocationChange?: boolean;
     state?: {
@@ -421,7 +471,29 @@ export class NavigationError extends RouterEvent {
 }
 
 // @public
+export type NavigationErrorHandlerFeature = RouterFeature<RouterFeatureKind.NavigationErrorHandlerFeature>;
+
+// @public
 export interface NavigationExtras extends UrlCreationOptions, NavigationBehaviorOptions {
+}
+
+// @public
+export class NavigationSkipped extends RouterEvent {
+    constructor(
+    id: number,
+    url: string,
+    reason: string,
+    code?: NavigationSkippedCode | undefined);
+    readonly code?: NavigationSkippedCode | undefined;
+    reason: string;
+    // (undocumented)
+    readonly type = EventType.NavigationSkipped;
+}
+
+// @public
+export const enum NavigationSkippedCode {
+    IgnoredByUrlHandlingStrategy = 1,
+    IgnoredSameUrlNavigation = 0
 }
 
 // @public
@@ -454,6 +526,9 @@ export class NoPreloading implements PreloadingStrategy {
     // (undocumented)
     static ɵprov: i0.ɵɵInjectableDeclaration<NoPreloading>;
 }
+
+// @public
+export type OnSameUrlNavigation = 'reload' | 'ignore';
 
 // @public
 export class OutletContext {
@@ -495,6 +570,9 @@ export class PreloadAllModules implements PreloadingStrategy {
 }
 
 // @public
+export type PreloadingFeature = RouterFeature<RouterFeatureKind.PreloadingFeature>;
+
+// @public
 export abstract class PreloadingStrategy {
     // (undocumented)
     abstract preload(route: Route, fn: () => Observable<any>): Observable<any>;
@@ -504,12 +582,15 @@ export abstract class PreloadingStrategy {
 export const PRIMARY_OUTLET = "primary";
 
 // @public
+export function provideRouter(routes: Routes, ...features: RouterFeatures[]): EnvironmentProviders;
+
+// @public @deprecated
 export function provideRoutes(routes: Routes): Provider[];
 
 // @public
 export type QueryParamsHandling = 'merge' | 'preserve' | '';
 
-// @public
+// @public @deprecated
 export interface Resolve<T> {
     // (undocumented)
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<T> | Promise<T> | T;
@@ -517,7 +598,7 @@ export interface Resolve<T> {
 
 // @public
 export type ResolveData = {
-    [key: string | symbol]: any | ResolveFn<unknown>;
+    [key: string | symbol]: ResolveFn<unknown> | DeprecatedGuard;
 };
 
 // @public
@@ -559,21 +640,22 @@ export class ResolveStart extends RouterEvent {
 
 // @public
 export interface Route {
-    canActivate?: Array<CanActivateFn | any>;
-    canActivateChild?: Array<CanActivateChildFn | any>;
-    canDeactivate?: Array<CanDeactivateFn<any> | any>;
-    canLoad?: Array<CanLoadFn | any>;
-    canMatch?: Array<Type<CanMatch> | InjectionToken<CanMatchFn> | CanMatchFn>;
+    canActivate?: Array<CanActivateFn | DeprecatedGuard>;
+    canActivateChild?: Array<CanActivateChildFn | DeprecatedGuard>;
+    canDeactivate?: Array<CanDeactivateFn<any> | DeprecatedGuard>;
+    // @deprecated
+    canLoad?: Array<CanLoadFn | DeprecatedGuard>;
+    canMatch?: Array<CanMatchFn | DeprecatedGuard>;
     children?: Routes;
     component?: Type<any>;
     data?: Data;
     loadChildren?: LoadChildren;
-    loadComponent?: () => Type<unknown> | Observable<Type<unknown>> | Promise<Type<unknown>>;
+    loadComponent?: () => Type<unknown> | Observable<Type<unknown> | DefaultExport<Type<unknown>>> | Promise<Type<unknown> | DefaultExport<Type<unknown>>>;
     matcher?: UrlMatcher;
     outlet?: string;
     path?: string;
     pathMatch?: 'prefix' | 'full';
-    providers?: Array<Provider | ImportedNgModuleProviders>;
+    providers?: Array<Provider | EnvironmentProviders>;
     redirectTo?: string;
     resolve?: ResolveData;
     runGuardsAndResolvers?: RunGuardsAndResolvers;
@@ -606,38 +688,45 @@ export class RouteConfigLoadStart {
 
 // @public
 export class Router {
-    constructor(rootComponentType: Type<any> | null, urlSerializer: UrlSerializer, rootContexts: ChildrenOutletContexts, location: Location_2, injector: Injector, compiler: Compiler, config: Routes);
+    constructor();
+    // @deprecated
     canceledNavigationResolution: 'replace' | 'computed';
     // (undocumented)
     config: Routes;
     createUrlTree(commands: any[], navigationExtras?: UrlCreationOptions): UrlTree;
     dispose(): void;
-    errorHandler: ErrorHandler;
-    readonly events: Observable<Event_2>;
+    // @deprecated
+    errorHandler: (error: any) => any;
+    get events(): Observable<Event_2>;
     getCurrentNavigation(): Navigation | null;
     initialNavigation(): void;
     // @deprecated
     isActive(url: string | UrlTree, exact: boolean): boolean;
     isActive(url: string | UrlTree, matchOptions: IsActiveMatchOptions): boolean;
+    // @deprecated
     malformedUriErrorHandler: (error: URIError, urlSerializer: UrlSerializer, url: string) => UrlTree;
     navigate(commands: any[], extras?: NavigationExtras): Promise<boolean>;
     navigateByUrl(url: string | UrlTree, extras?: NavigationBehaviorOptions): Promise<boolean>;
     navigated: boolean;
     // (undocumented)
     ngOnDestroy(): void;
-    onSameUrlNavigation: 'reload' | 'ignore';
+    // @deprecated
+    onSameUrlNavigation: OnSameUrlNavigation;
+    // @deprecated
     paramsInheritanceStrategy: 'emptyOnly' | 'always';
     parseUrl(url: string): UrlTree;
-    // @deprecated
-    relativeLinkResolution: 'legacy' | 'corrected';
     resetConfig(config: Routes): void;
+    // @deprecated
     routeReuseStrategy: RouteReuseStrategy;
     readonly routerState: RouterState;
     serializeUrl(url: UrlTree): string;
     setUpLocationChangeListener(): void;
+    // @deprecated
     titleStrategy?: TitleStrategy;
     get url(): string;
+    // @deprecated
     urlHandlingStrategy: UrlHandlingStrategy;
+    // @deprecated
     urlUpdateStrategy: 'deferred' | 'eager';
     // (undocumented)
     static ɵfac: i0.ɵɵFactoryDeclaration<Router, never>;
@@ -652,12 +741,27 @@ export const ROUTER_CONFIGURATION: InjectionToken<ExtraOptions>;
 export const ROUTER_INITIALIZER: InjectionToken<(compRef: ComponentRef<any>) => void>;
 
 // @public
+export interface RouterConfigOptions {
+    canceledNavigationResolution?: 'replace' | 'computed';
+    onSameUrlNavigation?: OnSameUrlNavigation;
+    paramsInheritanceStrategy?: 'emptyOnly' | 'always';
+    urlUpdateStrategy?: 'deferred' | 'eager';
+}
+
+// @public
+export type RouterConfigurationFeature = RouterFeature<RouterFeatureKind.RouterConfigurationFeature>;
+
+// @public
 export abstract class RouteReuseStrategy {
     abstract retrieve(route: ActivatedRouteSnapshot): DetachedRouteHandle | null;
     abstract shouldAttach(route: ActivatedRouteSnapshot): boolean;
     abstract shouldDetach(route: ActivatedRouteSnapshot): boolean;
     abstract shouldReuseRoute(future: ActivatedRouteSnapshot, curr: ActivatedRouteSnapshot): boolean;
     abstract store(route: ActivatedRouteSnapshot, handle: DetachedRouteHandle | null): void;
+    // (undocumented)
+    static ɵfac: i0.ɵɵFactoryDeclaration<RouteReuseStrategy, never>;
+    // (undocumented)
+    static ɵprov: i0.ɵɵInjectableDeclaration<RouteReuseStrategy>;
 }
 
 // @public
@@ -670,42 +774,66 @@ export class RouterEvent {
 }
 
 // @public
-export class RouterLink implements OnChanges {
-    constructor(router: Router, route: ActivatedRoute, tabIndexAttribute: string | null | undefined, renderer: Renderer2, el: ElementRef);
-    fragment?: string;
+export interface RouterFeature<FeatureKind extends RouterFeatureKind> {
     // (undocumented)
-    ngOnChanges(changes: SimpleChanges): void;
+    ɵkind: FeatureKind;
     // (undocumented)
-    onClick(): boolean;
-    preserveFragment: boolean;
-    queryParams?: Params | null;
-    queryParamsHandling?: QueryParamsHandling | null;
-    relativeTo?: ActivatedRoute | null;
-    replaceUrl: boolean;
-    set routerLink(commands: any[] | string | null | undefined);
-    skipLocationChange: boolean;
-    state?: {
-        [k: string]: any;
-    };
-    // (undocumented)
-    get urlTree(): UrlTree | null;
-    // (undocumented)
-    static ɵdir: i0.ɵɵDirectiveDeclaration<RouterLink, ":not(a):not(area)[routerLink]", never, { "queryParams": "queryParams"; "fragment": "fragment"; "queryParamsHandling": "queryParamsHandling"; "preserveFragment": "preserveFragment"; "skipLocationChange": "skipLocationChange"; "replaceUrl": "replaceUrl"; "state": "state"; "relativeTo": "relativeTo"; "routerLink": "routerLink"; }, {}, never, never, true>;
-    // (undocumented)
-    static ɵfac: i0.ɵɵFactoryDeclaration<RouterLink, [null, null, { attribute: "tabindex"; }, null, null]>;
+    ɵproviders: Provider[];
 }
 
 // @public
+export type RouterFeatures = PreloadingFeature | DebugTracingFeature | InitialNavigationFeature | InMemoryScrollingFeature | RouterConfigurationFeature | NavigationErrorHandlerFeature;
+
+// @public
+export type RouterHashLocationFeature = RouterFeature<RouterFeatureKind.RouterHashLocationFeature>;
+
+// @public
+class RouterLink implements OnChanges, OnDestroy {
+    constructor(router: Router, route: ActivatedRoute, tabIndexAttribute: string | null | undefined, renderer: Renderer2, el: ElementRef, locationStrategy?: LocationStrategy | undefined);
+    fragment?: string;
+    href: string | null;
+    // (undocumented)
+    ngOnChanges(changes: SimpleChanges): void;
+    // (undocumented)
+    ngOnDestroy(): any;
+    // (undocumented)
+    onClick(button: number, ctrlKey: boolean, shiftKey: boolean, altKey: boolean, metaKey: boolean): boolean;
+    set preserveFragment(preserveFragment: boolean | string | null | undefined);
+    // (undocumented)
+    get preserveFragment(): boolean;
+    queryParams?: Params | null;
+    queryParamsHandling?: QueryParamsHandling | null;
+    relativeTo?: ActivatedRoute | null;
+    set replaceUrl(replaceUrl: boolean | string | null | undefined);
+    // (undocumented)
+    get replaceUrl(): boolean;
+    set routerLink(commands: any[] | string | null | undefined);
+    set skipLocationChange(skipLocationChange: boolean | string | null | undefined);
+    // (undocumented)
+    get skipLocationChange(): boolean;
+    state?: {
+        [k: string]: any;
+    };
+    target?: string;
+    // (undocumented)
+    get urlTree(): UrlTree | null;
+    // (undocumented)
+    static ɵdir: i0.ɵɵDirectiveDeclaration<RouterLink, "[routerLink]", never, { "target": "target"; "queryParams": "queryParams"; "fragment": "fragment"; "queryParamsHandling": "queryParamsHandling"; "state": "state"; "relativeTo": "relativeTo"; "preserveFragment": "preserveFragment"; "skipLocationChange": "skipLocationChange"; "replaceUrl": "replaceUrl"; "routerLink": "routerLink"; }, {}, never, never, true, never>;
+    // (undocumented)
+    static ɵfac: i0.ɵɵFactoryDeclaration<RouterLink, [null, null, { attribute: "tabindex"; }, null, null, null]>;
+}
+export { RouterLink }
+export { RouterLink as RouterLinkWithHref }
+
+// @public
 export class RouterLinkActive implements OnChanges, OnDestroy, AfterContentInit {
-    constructor(router: Router, element: ElementRef, renderer: Renderer2, cdr: ChangeDetectorRef, link?: RouterLink | undefined, linkWithHref?: RouterLinkWithHref | undefined);
+    constructor(router: Router, element: ElementRef, renderer: Renderer2, cdr: ChangeDetectorRef, link?: RouterLink | undefined);
     ariaCurrentWhenActive?: 'page' | 'step' | 'location' | 'date' | 'time' | true | false;
     // (undocumented)
-    readonly isActive: boolean;
+    get isActive(): boolean;
     readonly isActiveChange: EventEmitter<boolean>;
     // (undocumented)
     links: QueryList<RouterLink>;
-    // (undocumented)
-    linksWithHrefs: QueryList<RouterLinkWithHref>;
     // (undocumented)
     ngAfterContentInit(): void;
     // (undocumented)
@@ -718,41 +846,9 @@ export class RouterLinkActive implements OnChanges, OnDestroy, AfterContentInit 
         exact: boolean;
     } | IsActiveMatchOptions;
     // (undocumented)
-    static ɵdir: i0.ɵɵDirectiveDeclaration<RouterLinkActive, "[routerLinkActive]", ["routerLinkActive"], { "routerLinkActiveOptions": "routerLinkActiveOptions"; "ariaCurrentWhenActive": "ariaCurrentWhenActive"; "routerLinkActive": "routerLinkActive"; }, { "isActiveChange": "isActiveChange"; }, ["links", "linksWithHrefs"], never, true>;
+    static ɵdir: i0.ɵɵDirectiveDeclaration<RouterLinkActive, "[routerLinkActive]", ["routerLinkActive"], { "routerLinkActiveOptions": "routerLinkActiveOptions"; "ariaCurrentWhenActive": "ariaCurrentWhenActive"; "routerLinkActive": "routerLinkActive"; }, { "isActiveChange": "isActiveChange"; }, ["links"], never, true, never>;
     // (undocumented)
-    static ɵfac: i0.ɵɵFactoryDeclaration<RouterLinkActive, [null, null, null, null, { optional: true; }, { optional: true; }]>;
-}
-
-// @public
-export class RouterLinkWithHref implements OnChanges, OnDestroy {
-    constructor(router: Router, route: ActivatedRoute, locationStrategy: LocationStrategy);
-    fragment?: string;
-    // (undocumented)
-    href: string | null;
-    // (undocumented)
-    ngOnChanges(changes: SimpleChanges): any;
-    // (undocumented)
-    ngOnDestroy(): any;
-    // (undocumented)
-    onClick(button: number, ctrlKey: boolean, shiftKey: boolean, altKey: boolean, metaKey: boolean): boolean;
-    preserveFragment: boolean;
-    queryParams?: Params | null;
-    queryParamsHandling?: QueryParamsHandling | null;
-    relativeTo?: ActivatedRoute | null;
-    replaceUrl: boolean;
-    set routerLink(commands: any[] | string | null | undefined);
-    skipLocationChange: boolean;
-    state?: {
-        [k: string]: any;
-    };
-    // (undocumented)
-    target: string;
-    // (undocumented)
-    get urlTree(): UrlTree | null;
-    // (undocumented)
-    static ɵdir: i0.ɵɵDirectiveDeclaration<RouterLinkWithHref, "a[routerLink],area[routerLink]", never, { "target": "target"; "queryParams": "queryParams"; "fragment": "fragment"; "queryParamsHandling": "queryParamsHandling"; "preserveFragment": "preserveFragment"; "skipLocationChange": "skipLocationChange"; "replaceUrl": "replaceUrl"; "state": "state"; "relativeTo": "relativeTo"; "routerLink": "routerLink"; }, {}, never, never, true>;
-    // (undocumented)
-    static ɵfac: i0.ɵɵFactoryDeclaration<RouterLinkWithHref, never>;
+    static ɵfac: i0.ɵɵFactoryDeclaration<RouterLinkActive, [null, null, null, null, { optional: true; }]>;
 }
 
 // @public
@@ -765,12 +861,11 @@ export class RouterModule {
     // (undocumented)
     static ɵinj: i0.ɵɵInjectorDeclaration<RouterModule>;
     // (undocumented)
-    static ɵmod: i0.ɵɵNgModuleDeclaration<RouterModule, never, [typeof i1.RouterOutlet, typeof i2.RouterLink, typeof i2.RouterLinkWithHref, typeof i3.RouterLinkActive, typeof i4.ɵEmptyOutletComponent], [typeof i1.RouterOutlet, typeof i2.RouterLink, typeof i2.RouterLinkWithHref, typeof i3.RouterLinkActive, typeof i4.ɵEmptyOutletComponent]>;
+    static ɵmod: i0.ɵɵNgModuleDeclaration<RouterModule, never, [typeof i1.RouterOutlet, typeof i2.RouterLink, typeof i3.RouterLinkActive, typeof i4.ɵEmptyOutletComponent], [typeof i1.RouterOutlet, typeof i2.RouterLink, typeof i3.RouterLinkActive, typeof i4.ɵEmptyOutletComponent]>;
 }
 
 // @public
 export class RouterOutlet implements OnDestroy, OnInit, RouterOutletContract {
-    constructor(parentContexts: ChildrenOutletContexts, location: ViewContainerRef, name: string, changeDetector: ChangeDetectorRef, environmentInjector: EnvironmentInjector);
     // (undocumented)
     get activatedRoute(): ActivatedRoute;
     // (undocumented)
@@ -791,14 +886,17 @@ export class RouterOutlet implements OnDestroy, OnInit, RouterOutletContract {
     detachEvents: EventEmitter<unknown>;
     // (undocumented)
     get isActivated(): boolean;
+    name: string;
+    // (undocumented)
+    ngOnChanges(changes: SimpleChanges): void;
     // (undocumented)
     ngOnDestroy(): void;
     // (undocumented)
     ngOnInit(): void;
     // (undocumented)
-    static ɵdir: i0.ɵɵDirectiveDeclaration<RouterOutlet, "router-outlet", ["outlet"], {}, { "activateEvents": "activate"; "deactivateEvents": "deactivate"; "attachEvents": "attach"; "detachEvents": "detach"; }, never, never, true>;
+    static ɵdir: i0.ɵɵDirectiveDeclaration<RouterOutlet, "router-outlet", ["outlet"], { "name": "name"; }, { "activateEvents": "activate"; "deactivateEvents": "deactivate"; "attachEvents": "attach"; "detachEvents": "detach"; }, never, never, true, never>;
     // (undocumented)
-    static ɵfac: i0.ɵɵFactoryDeclaration<RouterOutlet, [null, null, { attribute: "name"; }, null, null]>;
+    static ɵfac: i0.ɵɵFactoryDeclaration<RouterOutlet, never>;
 }
 
 // @public
@@ -877,7 +975,7 @@ export type RunGuardsAndResolvers = 'pathParamsChange' | 'pathParamsOrQueryParam
 // @public
 export class Scroll {
     constructor(
-    routerEvent: NavigationEnd,
+    routerEvent: NavigationEnd | NavigationSkipped,
     position: [number, number] | null,
     anchor: string | null);
     // (undocumented)
@@ -885,7 +983,7 @@ export class Scroll {
     // (undocumented)
     readonly position: [number, number] | null;
     // (undocumented)
-    readonly routerEvent: NavigationEnd;
+    readonly routerEvent: NavigationEnd | NavigationSkipped;
     // (undocumented)
     toString(): string;
     // (undocumented)
@@ -918,6 +1016,10 @@ export abstract class UrlHandlingStrategy {
     abstract extract(url: UrlTree): UrlTree;
     abstract merge(newUrlPart: UrlTree, rawUrl: UrlTree): UrlTree;
     abstract shouldProcessUrl(url: UrlTree): boolean;
+    // (undocumented)
+    static ɵfac: i0.ɵɵFactoryDeclaration<UrlHandlingStrategy, never>;
+    // (undocumented)
+    static ɵprov: i0.ɵɵInjectableDeclaration<UrlHandlingStrategy>;
 }
 
 // @public
@@ -978,6 +1080,10 @@ export abstract class UrlSerializer {
 
 // @public
 export class UrlTree {
+    constructor(
+    root?: UrlSegmentGroup,
+    queryParams?: Params,
+    fragment?: string | null);
     fragment: string | null;
     // (undocumented)
     get queryParamMap(): ParamMap;
@@ -989,6 +1095,30 @@ export class UrlTree {
 
 // @public (undocumented)
 export const VERSION: Version;
+
+// @public
+export function withDebugTracing(): DebugTracingFeature;
+
+// @public
+export function withDisabledInitialNavigation(): DisabledInitialNavigationFeature;
+
+// @public
+export function withEnabledBlockingInitialNavigation(): EnabledBlockingInitialNavigationFeature;
+
+// @public
+export function withHashLocation(): RouterConfigurationFeature;
+
+// @public
+export function withInMemoryScrolling(options?: InMemoryScrollingOptions): InMemoryScrollingFeature;
+
+// @public
+export function withNavigationErrorHandler(fn: (error: NavigationError) => void): NavigationErrorHandlerFeature;
+
+// @public
+export function withPreloading(preloadingStrategy: Type<PreloadingStrategy>): PreloadingFeature;
+
+// @public
+export function withRouterConfig(options: RouterConfigOptions): RouterConfigurationFeature;
 
 // (No @packageDocumentation comment for this package)
 

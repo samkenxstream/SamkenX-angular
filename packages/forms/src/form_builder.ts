@@ -9,7 +9,6 @@
 import {inject, Injectable} from '@angular/core';
 
 import {AsyncValidatorFn, ValidatorFn} from './directives/validators';
-import {ReactiveFormsModule} from './form_providers';
 import {AbstractControl, AbstractControlOptions, FormHooks} from './model/abstract_model';
 import {FormArray, UntypedFormArray} from './model/form_array';
 import {FormControl, FormControlOptions, FormControlState, UntypedFormControl} from './model/form_control';
@@ -24,13 +23,35 @@ function isAbstractControlOptions(options: AbstractControlOptions|{[key: string]
 }
 
 /**
+ * The union of all validator types that can be accepted by a ControlConfig.
+ */
+type ValidatorConfig = ValidatorFn|AsyncValidatorFn|ValidatorFn[]|AsyncValidatorFn[];
+
+/**
+ * The compiler may not always be able to prove that the elements of the control config are a tuple
+ * (i.e. occur in a fixed order). This slightly looser type is used for inference, to catch cases
+ * where the compiler cannot prove order and position.
+ *
+ * For example, consider the simple case `fb.group({foo: ['bar', Validators.required]})`. The
+ * compiler will infer this as an array, not as a tuple.
+ */
+type PermissiveControlConfig<T> = Array<T|FormControlState<T>|ValidatorConfig>;
+
+/**
+ * Helper type to allow the compiler to accept [XXXX, { updateOn: string }] as a valid shorthand
+ * argument for .group()
+ */
+interface PermissiveAbstractControlOptions extends Omit<AbstractControlOptions, 'updateOn'> {
+  updateOn?: string;
+}
+
+/**
  * ControlConfig<T> is a tuple containing a value of type T, plus optional validators and async
  * validators.
  *
  * @publicApi
  */
 export type ControlConfig<T> = [T|FormControlState<T>, (ValidatorFn|(ValidatorFn[]))?, (AsyncValidatorFn|AsyncValidatorFn[])?];
-
 
 // Disable clang-format to produce clearer formatting for this multiline type.
 // clang-format off
@@ -68,12 +89,7 @@ export type ɵElement<T, N extends null> =
   // FormControlState object container, which produces a nullable control.
   [T] extends [FormControlState<infer U>] ? FormControl<U|N> :
   // A ControlConfig tuple, which produces a nullable control.
-  [T] extends [ControlConfig<infer U>] ? FormControl<U|N> :
-  // ControlConfig can be too much for the compiler to infer in the wrapped case. This is
-  // not surprising, since it's practically death-by-polymorphism (e.g. the optional validators
-  // members that might be arrays). Watch for ControlConfigs that might fall through.
-  [T] extends [Array<infer U|ValidatorFn|ValidatorFn[]|AsyncValidatorFn|AsyncValidatorFn[]>] ? FormControl<U|N> :
-  // Fallthough case: T is not a container type; use it directly as a value.
+  [T] extends [PermissiveControlConfig<infer U>] ? FormControl<Exclude<U, ValidatorConfig| PermissiveAbstractControlOptions>|N> :
   FormControl<T|N>;
 
 // clang-format on
@@ -90,7 +106,7 @@ export type ɵElement<T, N extends null> =
  *
  * @publicApi
  */
-@Injectable({providedIn: ReactiveFormsModule})
+@Injectable({providedIn: 'root'})
 export class FormBuilder {
   private useNonNullable: boolean = false;
 
@@ -144,7 +160,7 @@ export class FormBuilder {
 
   /**
    * @description
-   * Construct a new `FormGroup` instance. Accepts a single generic argument, which is an object
+   * Constructs a new `FormGroup` instance. Accepts a single generic argument, which is an object
    * containing all the keys and corresponding inner control types.
    *
    * @param controls A collection of child controls. The key for each child is the name
@@ -164,7 +180,7 @@ export class FormBuilder {
 
   /**
    * @description
-   * Construct a new `FormGroup` instance.
+   * Constructs a new `FormGroup` instance.
    *
    * @deprecated This API is not typesafe and can result in issues with Closure Compiler renaming.
    * Use the `FormBuilder#group` overload with `AbstractControlOptions` instead.
@@ -208,7 +224,7 @@ export class FormBuilder {
 
   /**
    * @description
-   * Construct a new `FormRecord` instance. Accepts a single generic argument, which is an object
+   * Constructs a new `FormRecord` instance. Accepts a single generic argument, which is an object
    * containing all the keys and corresponding inner control types.
    *
    * @param controls A collection of child controls. The key for each child is the name
@@ -250,7 +266,7 @@ export class FormBuilder {
 
   /**
    * @description
-   * Construct a new `FormControl` with the given state, validators and options. Set
+   * Constructs a new `FormControl` with the given state, validators and options. Sets
    * `{nonNullable: true}` in the options to get a non-nullable control. Otherwise, the
    * control will be nullable. Accepts a single generic argument, which is the type  of the
    * control's value.
@@ -353,7 +369,7 @@ export class FormBuilder {
  * @publicApi
  */
 @Injectable({
-  providedIn: ReactiveFormsModule,
+  providedIn: 'root',
   useFactory: () => inject(FormBuilder).nonNullable,
 })
 export abstract class NonNullableFormBuilder {
@@ -399,7 +415,7 @@ export abstract class NonNullableFormBuilder {
 /**
  * UntypedFormBuilder is the same as @see FormBuilder, but it provides untyped controls.
  */
-@Injectable({providedIn: ReactiveFormsModule})
+@Injectable({providedIn: 'root'})
 export class UntypedFormBuilder extends FormBuilder {
   /**
    * Like `FormBuilder#group`, except the resulting group is untyped.

@@ -6,21 +6,21 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {AST, CssSelector, DomElementSchemaRegistry, LiteralPrimitive, ParseSourceSpan, PropertyRead, SafePropertyRead, TmplAstElement, TmplAstNode, TmplAstReference, TmplAstTemplate, TmplAstTextAttribute} from '@angular/compiler';
+import {AST, CssSelector, DomElementSchemaRegistry, ExternalExpr, LiteralPrimitive, ParseSourceSpan, PropertyRead, SafePropertyRead, TmplAstElement, TmplAstNode, TmplAstTemplate, TmplAstTextAttribute, WrappedNodeExpr} from '@angular/compiler';
 import ts from 'typescript';
 
 import {ErrorCode, ngErrorCode} from '../../diagnostics';
-import {absoluteFrom, absoluteFromSourceFile, AbsoluteFsPath, getSourceFileOrError} from '../../file_system';
-import {Reference, ReferenceEmitter} from '../../imports';
+import {absoluteFromSourceFile, AbsoluteFsPath, getSourceFileOrError} from '../../file_system';
+import {Reference, ReferenceEmitKind, ReferenceEmitter} from '../../imports';
 import {IncrementalBuild} from '../../incremental/api';
-import {MetaKind} from '../../metadata';
+import {DirectiveMeta, MetadataReader, MetadataReaderWithIndex, MetaKind, NgModuleIndex, NgModuleMeta, PipeMeta} from '../../metadata';
 import {PerfCheckpoint, PerfEvent, PerfPhase, PerfRecorder} from '../../perf';
 import {ProgramDriver, UpdateMode} from '../../program_driver';
-import {ClassDeclaration, isNamedClassDeclaration, ReflectionHost} from '../../reflection';
+import {ClassDeclaration, DeclarationNode, isNamedClassDeclaration, ReflectionHost} from '../../reflection';
 import {ComponentScopeKind, ComponentScopeReader, TypeCheckScopeRegistry} from '../../scope';
 import {isShim} from '../../shims';
 import {getSourceFileOrNull, isSymbolWithValueDeclaration} from '../../util/src/typescript';
-import {DirectiveInScope, ElementSymbol, FullTemplateMapping, GlobalCompletion, NgTemplateDiagnostic, OptimizeFor, PipeInScope, ProgramTypeCheckAdapter, Symbol, TcbLocation, TemplateDiagnostic, TemplateId, TemplateSymbol, TemplateTypeChecker, TypeCheckableDirectiveMeta, TypeCheckingConfig} from '../api';
+import {ElementSymbol, FullTemplateMapping, GlobalCompletion, NgTemplateDiagnostic, OptimizeFor, PotentialDirective, PotentialImport, PotentialImportKind, PotentialImportMode, PotentialPipe, ProgramTypeCheckAdapter, Symbol, TcbLocation, TemplateDiagnostic, TemplateId, TemplateSymbol, TemplateTypeChecker, TypeCheckableDirectiveMeta, TypeCheckingConfig} from '../api';
 import {makeTemplateDiagnostic} from '../diagnostics';
 
 import {CompletionEngine} from './completion';
@@ -30,7 +30,6 @@ import {TypeCheckShimGenerator} from './shim';
 import {TemplateSourceManager} from './source';
 import {findTypeCheckBlock, getTemplateMapping, TemplateSourceResolver} from './tcb_util';
 import {SymbolBuilder} from './template_symbol_builder';
-
 
 const REGISTRY = new DomElementSchemaRegistry();
 /**
@@ -75,7 +74,7 @@ export class TemplateTypeCheckerImpl implements TemplateTypeChecker {
    * destroyed when the `ts.Program` changes and the `TemplateTypeCheckerImpl` as a whole is
    * destroyed and replaced.
    */
-  private elementTagCache = new Map<ts.ClassDeclaration, Map<string, DirectiveInScope|null>>();
+  private elementTagCache = new Map<ts.ClassDeclaration, Map<string, PotentialDirective|null>>();
 
   private isComplete = false;
 
@@ -85,6 +84,9 @@ export class TemplateTypeCheckerImpl implements TemplateTypeChecker {
       private refEmitter: ReferenceEmitter, private reflector: ReflectionHost,
       private compilerHost: Pick<ts.CompilerHost, 'getCanonicalFileName'>,
       private priorBuild: IncrementalBuild<unknown, FileTypeCheckingData>,
+      private readonly metaReader: MetadataReader,
+      private readonly localMetaReader: MetadataReaderWithIndex,
+      private readonly ngModuleIndex: NgModuleIndex,
       private readonly componentScopeReader: ComponentScopeReader,
       private readonly typeCheckScopeRegistry: TypeCheckScopeRegistry,
       private readonly perf: PerfRecorder) {}
@@ -95,6 +97,14 @@ export class TemplateTypeCheckerImpl implements TemplateTypeChecker {
       return null;
     }
     return data.template;
+  }
+
+  getUsedDirectives(component: ts.ClassDeclaration): TypeCheckableDirectiveMeta[]|null {
+    return this.getLatestComponentState(component).data?.boundTarget.getUsedDirectives() || null;
+  }
+
+  getUsedPipes(component: ts.ClassDeclaration): string[]|null {
+    return this.getLatestComponentState(component).data?.boundTarget.getUsedPipes() || null;
   }
 
   private getLatestComponentState(component: ts.ClassDeclaration):
@@ -548,20 +558,45 @@ export class TemplateTypeCheckerImpl implements TemplateTypeChecker {
     return builder;
   }
 
-  getDirectivesInScope(component: ts.ClassDeclaration): DirectiveInScope[]|null {
-    const data = this.getScopeData(component);
-    if (data === null) {
-      return null;
+  getPotentialTemplateDirectives(component: ts.ClassDeclaration): PotentialDirective[] {
+    const typeChecker = this.programDriver.getProgram().getTypeChecker();
+    const inScopeDirectives = this.getScopeData(component)?.directives ?? [];
+    const resultingDirectives = new Map<ClassDeclaration<DeclarationNode>, PotentialDirective>();
+    // First, all in scope directives can be used.
+    for (const d of inScopeDirectives) {
+      resultingDirectives.set(d.ref.node, d);
     }
-    return data.directives;
+    // Any additional directives found from the global registry can be used, but are not in scope.
+    // In the future, we can also walk other registries for .d.ts files, or traverse the
+    // import/export graph.
+    for (const directiveClass of this.localMetaReader.getKnown(MetaKind.Directive)) {
+      const directiveMeta = this.metaReader.getDirectiveMetadata(new Reference(directiveClass));
+      if (directiveMeta === null) continue;
+      if (resultingDirectives.has(directiveClass)) continue;
+      const withScope = this.scopeDataOfDirectiveMeta(typeChecker, directiveMeta);
+      if (withScope === null) continue;
+      resultingDirectives.set(directiveClass, {...withScope, isInScope: false});
+    }
+    return Array.from(resultingDirectives.values());
   }
 
-  getPipesInScope(component: ts.ClassDeclaration): PipeInScope[]|null {
-    const data = this.getScopeData(component);
-    if (data === null) {
-      return null;
+  getPotentialPipes(component: ts.ClassDeclaration): PotentialPipe[] {
+    // Very similar to the above `getPotentialTemplateDirectives`, but on pipes.
+    const typeChecker = this.programDriver.getProgram().getTypeChecker();
+    const inScopePipes = this.getScopeData(component)?.pipes ?? [];
+    const resultingPipes = new Map<ClassDeclaration<DeclarationNode>, PotentialPipe>();
+    for (const p of inScopePipes) {
+      resultingPipes.set(p.ref.node, p);
     }
-    return data.pipes;
+    for (const pipeClass of this.localMetaReader.getKnown(MetaKind.Pipe)) {
+      const pipeMeta = this.metaReader.getPipeMetadata(new Reference(pipeClass));
+      if (pipeMeta === null) continue;
+      if (resultingPipes.has(pipeClass)) continue;
+      const withScope = this.scopeDataOfPipeMeta(typeChecker, pipeMeta);
+      if (withScope === null) continue;
+      resultingPipes.set(pipeClass, {...withScope, isInScope: false});
+    }
+    return Array.from(resultingPipes.values());
   }
 
   getDirectiveMetadata(dir: ts.ClassDeclaration): TypeCheckableDirectiveMeta|null {
@@ -571,12 +606,26 @@ export class TemplateTypeCheckerImpl implements TemplateTypeChecker {
     return this.typeCheckScopeRegistry.getTypeCheckDirectiveMetadata(new Reference(dir));
   }
 
-  getPotentialElementTags(component: ts.ClassDeclaration): Map<string, DirectiveInScope|null> {
+  getNgModuleMetadata(module: ts.ClassDeclaration): NgModuleMeta|null {
+    if (!isNamedClassDeclaration(module)) {
+      return null;
+    }
+    return this.metaReader.getNgModuleMetadata(new Reference(module));
+  }
+
+  getPipeMetadata(pipe: ts.ClassDeclaration): PipeMeta|null {
+    if (!isNamedClassDeclaration(pipe)) {
+      return null;
+    }
+    return this.metaReader.getPipeMetadata(new Reference(pipe));
+  }
+
+  getPotentialElementTags(component: ts.ClassDeclaration): Map<string, PotentialDirective|null> {
     if (this.elementTagCache.has(component)) {
       return this.elementTagCache.get(component)!;
     }
 
-    const tagMap = new Map<string, DirectiveInScope|null>();
+    const tagMap = new Map<string, PotentialDirective|null>();
 
     for (const tag of REGISTRY.allKnownElementNames()) {
       tagMap.set(tag, null);
@@ -585,6 +634,10 @@ export class TemplateTypeCheckerImpl implements TemplateTypeChecker {
     const scope = this.getScopeData(component);
     if (scope !== null) {
       for (const directive of scope.directives) {
+        if (directive.selector === null) {
+          continue;
+        }
+
         for (const selector of CssSelector.parse(directive.selector)) {
           if (selector.element === null || tagMap.has(selector.element)) {
             // Skip this directive if it doesn't match an element tag, or if another directive has
@@ -611,6 +664,116 @@ export class TemplateTypeCheckerImpl implements TemplateTypeChecker {
 
   getPotentialDomEvents(tagName: string): string[] {
     return REGISTRY.allKnownEventsOfElement(tagName);
+  }
+
+  getPrimaryAngularDecorator(target: ts.ClassDeclaration): ts.Decorator|null {
+    this.ensureAllShimsForOneFile(target.getSourceFile());
+
+    if (!isNamedClassDeclaration(target)) {
+      return null;
+    }
+    const ref = new Reference(target);
+    const dirMeta = this.metaReader.getDirectiveMetadata(ref);
+    if (dirMeta !== null) {
+      return dirMeta.decorator;
+    }
+
+    const pipeMeta = this.metaReader.getPipeMetadata(ref);
+    if (pipeMeta !== null) {
+      return pipeMeta.decorator;
+    }
+
+    const ngModuleMeta = this.metaReader.getNgModuleMetadata(ref);
+    if (ngModuleMeta !== null) {
+      return ngModuleMeta.decorator;
+    }
+
+    return null;
+  }
+
+  getOwningNgModule(component: ts.ClassDeclaration): ts.ClassDeclaration|null {
+    if (!isNamedClassDeclaration(component)) {
+      return null;
+    }
+
+    const dirMeta = this.metaReader.getDirectiveMetadata(new Reference(component));
+    if (dirMeta !== null && dirMeta.isStandalone) {
+      return null;
+    }
+
+    const scope = this.componentScopeReader.getScopeForComponent(component);
+    if (scope === null || scope.kind !== ComponentScopeKind.NgModule ||
+        !isNamedClassDeclaration(scope.ngModule)) {
+      return null;
+    }
+
+    return scope.ngModule;
+  }
+
+  private emit(
+      kind: PotentialImportKind, refTo: Reference<ClassDeclaration>,
+      inContext: ts.ClassDeclaration): PotentialImport|null {
+    const emittedRef = this.refEmitter.emit(refTo, inContext.getSourceFile());
+    if (emittedRef.kind === ReferenceEmitKind.Failed) {
+      return null;
+    }
+    const emitted = emittedRef.expression;
+    if (emitted instanceof WrappedNodeExpr) {
+      let isForwardReference = false;
+      if (emitted.node.getStart() > inContext.getStart()) {
+        const declaration = this.programDriver.getProgram()
+                                .getTypeChecker()
+                                .getTypeAtLocation(emitted.node)
+                                .getSymbol()
+                                ?.declarations?.[0];
+        if (declaration && declaration.getSourceFile() === inContext.getSourceFile()) {
+          isForwardReference = true;
+        }
+      }
+      // An appropriate identifier is already in scope.
+      return {kind, symbolName: emitted.node.text, isForwardReference};
+    } else if (
+        emitted instanceof ExternalExpr && emitted.value.moduleName !== null &&
+        emitted.value.name !== null) {
+      return {
+        kind,
+        moduleSpecifier: emitted.value.moduleName,
+        symbolName: emitted.value.name,
+        isForwardReference: false,
+      };
+    }
+    return null;
+  }
+
+  getPotentialImportsFor(
+      toImport: Reference<ClassDeclaration>, inContext: ts.ClassDeclaration,
+      importMode: PotentialImportMode): ReadonlyArray<PotentialImport> {
+    const imports: PotentialImport[] = [];
+
+    const meta =
+        this.metaReader.getDirectiveMetadata(toImport) ?? this.metaReader.getPipeMetadata(toImport);
+    if (meta === null) {
+      return imports;
+    }
+
+    if (meta.isStandalone || importMode === PotentialImportMode.ForceDirect) {
+      const emitted = this.emit(PotentialImportKind.Standalone, toImport, inContext);
+      if (emitted !== null) {
+        imports.push(emitted);
+      }
+    }
+
+    const exportingNgModules = this.ngModuleIndex.getNgModulesExporting(meta.ref.node);
+    if (exportingNgModules !== null) {
+      for (const exporter of exportingNgModules) {
+        const emittedRef = this.emit(PotentialImportKind.NgModule, exporter, inContext);
+        if (emittedRef !== null) {
+          imports.push(emittedRef);
+        }
+      }
+    }
+
+    return imports;
   }
 
   private getScopeData(component: ts.ClassDeclaration): ScopeData|null {
@@ -641,43 +804,58 @@ export class TemplateTypeCheckerImpl implements TemplateTypeChecker {
     const typeChecker = this.programDriver.getProgram().getTypeChecker();
     for (const dep of dependencies) {
       if (dep.kind === MetaKind.Directive) {
-        if (dep.selector === null) {
-          // Skip this directive, it can't be added to a template anyway.
-          continue;
-        }
-        const tsSymbol = typeChecker.getSymbolAtLocation(dep.ref.node.name);
-        if (!isSymbolWithValueDeclaration(tsSymbol)) {
-          continue;
-        }
-
-        let ngModule: ClassDeclaration|null = null;
-        const moduleScopeOfDir = this.componentScopeReader.getScopeForComponent(dep.ref.node);
-        if (moduleScopeOfDir !== null && moduleScopeOfDir.kind === ComponentScopeKind.NgModule) {
-          ngModule = moduleScopeOfDir.ngModule;
-        }
-
-        data.directives.push({
-          isComponent: dep.isComponent,
-          isStructural: dep.isStructural,
-          selector: dep.selector,
-          tsSymbol,
-          ngModule,
-        });
+        const dirScope = this.scopeDataOfDirectiveMeta(typeChecker, dep);
+        if (dirScope === null) continue;
+        data.directives.push({...dirScope, isInScope: true});
       } else if (dep.kind === MetaKind.Pipe) {
-        const tsSymbol = typeChecker.getSymbolAtLocation(dep.ref.node.name);
-        if (tsSymbol === undefined) {
-          continue;
-        }
-        data.pipes.push({
-          name: dep.name,
-          tsSymbol,
-        });
+        const pipeScope = this.scopeDataOfPipeMeta(typeChecker, dep);
+        if (pipeScope === null) continue;
+        data.pipes.push({...pipeScope, isInScope: true});
       }
     }
 
-
     this.scopeCache.set(component, data);
     return data;
+  }
+
+  private scopeDataOfDirectiveMeta(typeChecker: ts.TypeChecker, dep: DirectiveMeta):
+      Omit<PotentialDirective, 'isInScope'>|null {
+    if (dep.selector === null) {
+      // Skip this directive, it can't be added to a template anyway.
+      return null;
+    }
+    const tsSymbol = typeChecker.getSymbolAtLocation(dep.ref.node.name);
+    if (!isSymbolWithValueDeclaration(tsSymbol)) {
+      return null;
+    }
+
+    let ngModule: ClassDeclaration|null = null;
+    const moduleScopeOfDir = this.componentScopeReader.getScopeForComponent(dep.ref.node);
+    if (moduleScopeOfDir !== null && moduleScopeOfDir.kind === ComponentScopeKind.NgModule) {
+      ngModule = moduleScopeOfDir.ngModule;
+    }
+
+    return {
+      ref: dep.ref,
+      isComponent: dep.isComponent,
+      isStructural: dep.isStructural,
+      selector: dep.selector,
+      tsSymbol,
+      ngModule,
+    };
+  }
+
+  private scopeDataOfPipeMeta(typeChecker: ts.TypeChecker, dep: PipeMeta):
+      Omit<PotentialPipe, 'isInScope'>|null {
+    const tsSymbol = typeChecker.getSymbolAtLocation(dep.ref.node.name);
+    if (tsSymbol === undefined) {
+      return null;
+    }
+    return {
+      ref: dep.ref,
+      name: dep.name,
+      tsSymbol,
+    };
   }
 }
 
@@ -841,7 +1019,7 @@ class SingleShimTypeCheckingHost extends SingleFileTypeCheckingHost {
  * Cached scope information for a component.
  */
 interface ScopeData {
-  directives: DirectiveInScope[];
-  pipes: PipeInScope[];
+  directives: PotentialDirective[];
+  pipes: PotentialPipe[];
   isPoisoned: boolean;
 }

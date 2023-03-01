@@ -15,10 +15,9 @@ import {RElement} from '../interfaces/renderer_dom';
 import {isContentQueryHost, isDirectiveHost} from '../interfaces/type_checks';
 import {HEADER_OFFSET, LView, RENDERER, TView} from '../interfaces/view';
 import {assertTNodeType} from '../node_assert';
-import {appendChild, createElementNode, writeDirectClass, writeDirectStyle} from '../node_manipulation';
+import {appendChild, createElementNode, setupStaticAttributes} from '../node_manipulation';
 import {decreaseElementDepthCount, getBindingIndex, getCurrentTNode, getElementDepthCount, getLView, getNamespace, getTView, increaseElementDepthCount, isCurrentTNodeParent, setCurrentTNode, setCurrentTNodeAsNotParent} from '../state';
 import {computeStaticStyling} from '../styling/static_styling';
-import {setUpAttributes} from '../util/attrs_utils';
 import {getConstant} from '../util/view_utils';
 
 import {validateElementIsKnown} from './element_validation';
@@ -27,8 +26,8 @@ import {createDirectivesInstances, executeContentQueries, getOrCreateTNode, reso
 
 
 function elementStartFirstCreatePass(
-    index: number, tView: TView, lView: LView, native: RElement, name: string,
-    attrsIndex?: number|null, localRefsIndex?: number): TElementNode {
+    index: number, tView: TView, lView: LView, name: string, attrsIndex?: number|null,
+    localRefsIndex?: number): TElementNode {
   ngDevMode && assertFirstCreatePass(tView);
   ngDevMode && ngDevMode.firstCreatePass++;
 
@@ -36,11 +35,7 @@ function elementStartFirstCreatePass(
   const attrs = getConstant<TAttributes>(tViewConsts, attrsIndex);
   const tNode = getOrCreateTNode(tView, index, TNodeType.Element, name, attrs);
 
-  const hasDirectives =
-      resolveDirectives(tView, lView, tNode, getConstant<string[]>(tViewConsts, localRefsIndex));
-  if (ngDevMode) {
-    validateElementIsKnown(native, lView, tNode.value, tView.schemas, hasDirectives);
-  }
+  resolveDirectives(tView, lView, tNode, getConstant<string[]>(tViewConsts, localRefsIndex));
 
   if (tNode.attrs !== null) {
     computeStaticStyling(tNode, tNode.attrs, false);
@@ -86,25 +81,18 @@ export function ɵɵelementStart(
   ngDevMode && assertIndexInRange(lView, adjustedIndex);
 
   const renderer = lView[RENDERER];
-  const native = lView[adjustedIndex] = createElementNode(renderer, name, getNamespace());
   const tNode = tView.firstCreatePass ?
-      elementStartFirstCreatePass(
-          adjustedIndex, tView, lView, native, name, attrsIndex, localRefsIndex) :
+      elementStartFirstCreatePass(adjustedIndex, tView, lView, name, attrsIndex, localRefsIndex) :
       tView.data[adjustedIndex] as TElementNode;
-  setCurrentTNode(tNode, true);
+  const native = lView[adjustedIndex] = createElementNode(renderer, name, getNamespace());
+  const hasDirectives = isDirectiveHost(tNode);
 
-  const mergedAttrs = tNode.mergedAttrs;
-  if (mergedAttrs !== null) {
-    setUpAttributes(renderer, native, mergedAttrs);
+  if (ngDevMode && tView.firstCreatePass) {
+    validateElementIsKnown(native, lView, tNode.value, tView.schemas, hasDirectives);
   }
-  const classes = tNode.classes;
-  if (classes !== null) {
-    writeDirectClass(renderer, native, classes);
-  }
-  const styles = tNode.styles;
-  if (styles !== null) {
-    writeDirectStyle(renderer, native, styles);
-  }
+
+  setCurrentTNode(tNode, true);
+  setupStaticAttributes(renderer, native, tNode);
 
   if ((tNode.flags & TNodeFlags.isDetached) !== TNodeFlags.isDetached) {
     // In the i18n case, the translation may have removed this element, so only add it if it is not
@@ -120,8 +108,7 @@ export function ɵɵelementStart(
   }
   increaseElementDepthCount();
 
-
-  if (isDirectiveHost(tNode)) {
+  if (hasDirectives) {
     createDirectivesInstances(tView, lView, tNode);
     executeContentQueries(tView, tNode, lView);
   }

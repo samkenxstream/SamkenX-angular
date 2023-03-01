@@ -168,12 +168,9 @@ export class NgForOf<T, U extends NgIterable<T> = NgIterable<T>> implements DoCh
   @Input()
   set ngForTrackBy(fn: TrackByFunction<T>) {
     if (NG_DEV_MODE && fn != null && typeof fn !== 'function') {
-      // TODO(vicb): use a log service once there is a public one available
-      if (<any>console && <any>console.warn) {
-        console.warn(
-            `trackBy must be a function, but received ${JSON.stringify(fn)}. ` +
-            `See https://angular.io/api/common/NgForOf#change-propagation for more information.`);
-      }
+      console.warn(
+          `trackBy must be a function, but received ${JSON.stringify(fn)}. ` +
+          `See https://angular.io/api/common/NgForOf#change-propagation for more information.`);
     }
     this._trackByFn = fn;
   }
@@ -185,7 +182,9 @@ export class NgForOf<T, U extends NgIterable<T> = NgIterable<T>> implements DoCh
   private _ngForOf: U|undefined|null = null;
   private _ngForOfDirty: boolean = true;
   private _differ: IterableDiffer<T>|null = null;
-  // TODO(issue/24571): remove '!'.
+  // TODO(issue/24571): remove '!'
+  // waiting for microsoft/typescript#43662 to allow the return type `TrackByFunction|undefined` for
+  // the getter
   private _trackByFn!: TrackByFunction<T>;
 
   constructor(
@@ -289,6 +288,11 @@ export class NgForOf<T, U extends NgIterable<T> = NgIterable<T>> implements DoCh
     return true;
   }
 }
+
+// Also export the `NgForOf` class as `NgFor` to improve the DX for
+// cases when the directive is used as standalone, so the class name
+// matches the CSS selector (*ngFor).
+export {NgForOf as NgFor};
 
 function applyViewChange<T>(
     view: EmbeddedViewRef<NgForOfContext<T>>, record: IterableChangeRecord<T>) {

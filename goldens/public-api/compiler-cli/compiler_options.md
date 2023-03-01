@@ -57,13 +57,6 @@ export interface MiscOptions {
 }
 
 // @public
-export interface NgcCompatibilityOptions {
-    enableIvy?: boolean | 'ngtsc';
-    generateNgFactoryShims?: boolean;
-    generateNgSummaryShims?: boolean;
-}
-
-// @public
 export interface StrictTemplateOptions {
     strictAttributeTypes?: boolean;
     strictContextGenerics?: boolean;

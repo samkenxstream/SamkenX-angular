@@ -48,7 +48,7 @@ For example, your `myBuilder` folder could contain the following files.
 | `tsconfig.json`          | [TypeScript configuration](https://www.typescriptlang.org/docs/handbook/tsconfig-json.html).              |
 
 Publish the builder to `npm` \(see [Publishing your Library](guide/creating-libraries#publishing-your-library)\).
-If you publish it as `&commat;example/my-builder`, install it using the following command.
+If you publish it as `@example/my-builder`, install it using the following command.
 
 <code-example format="shell" language="shell">
 
@@ -445,7 +445,7 @@ Architect can support watch mode, but there are some things to look out for.
     This prevents Architect from stopping the builder if another run is scheduled.
 
 When your builder calls `BuilderRun.stop()` to exit watch mode, Architect unsubscribes from the builder's Observable and calls the builder's teardown logic to clean up.
-\(This behavior also allows for long running builds to be stopped and cleaned up.\)
+\(This behavior also allows for long-running builds to be stopped and cleaned up.\)
 
 In general, if your builder is watching an external event, you should separate your run into three phases.
 

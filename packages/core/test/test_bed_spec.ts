@@ -6,7 +6,7 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {APP_INITIALIZER, ChangeDetectorRef, Compiler, Component, Directive, ElementRef, ErrorHandler, getNgModuleById, Inject, Injectable, InjectionToken, Injector, Input, LOCALE_ID, ModuleWithProviders, NgModule, Optional, Pipe, Type, ViewChild, ɵsetClassMetadata as setClassMetadata, ɵɵdefineComponent as defineComponent, ɵɵdefineInjector as defineInjector, ɵɵdefineNgModule as defineNgModule, ɵɵelementEnd as elementEnd, ɵɵelementStart as elementStart, ɵɵsetNgModuleScope as setNgModuleScope, ɵɵtext as text} from '@angular/core';
+import {APP_INITIALIZER, ChangeDetectorRef, Compiler, Component, Directive, ElementRef, ErrorHandler, getNgModuleById, inject, Inject, Injectable, InjectFlags, InjectionToken, InjectOptions, Injector, Input, LOCALE_ID, ModuleWithProviders, NgModule, Optional, Pipe, Type, ViewChild, ɵsetClassMetadata as setClassMetadata, ɵɵdefineComponent as defineComponent, ɵɵdefineInjector as defineInjector, ɵɵdefineNgModule as defineNgModule, ɵɵelementEnd as elementEnd, ɵɵelementStart as elementStart, ɵɵsetNgModuleScope as setNgModuleScope, ɵɵtext as text} from '@angular/core';
 import {TestBed, TestBedImpl} from '@angular/core/testing/src/test_bed';
 import {By} from '@angular/platform-browser';
 import {expect} from '@angular/platform-browser/testing/src/matchers';
@@ -1020,7 +1020,7 @@ describe('TestBed', () => {
 
     it('overridden with an array', () => {
       const overrideValue = ['override'];
-      TestBed.overrideProvider(multiToken, {useValue: overrideValue, multi: true} as any);
+      TestBed.overrideProvider(multiToken, {useValue: overrideValue, multi: true});
 
       const value = TestBed.inject(multiToken);
       expect(value.length).toEqual(overrideValue.length);
@@ -1031,7 +1031,7 @@ describe('TestBed', () => {
       // This is actually invalid because multi providers return arrays. We have this here so we can
       // ensure Ivy behaves the same as VE does currently.
       const overrideValue = 'override';
-      TestBed.overrideProvider(multiToken, {useValue: overrideValue, multi: true} as any);
+      TestBed.overrideProvider(multiToken, {useValue: overrideValue, multi: true});
 
       const value = TestBed.inject(multiToken);
       expect(value.length).toEqual(overrideValue.length);
@@ -1248,7 +1248,7 @@ describe('TestBed', () => {
     });
 
     const multiOverride = {useValue: [{value: 'new provider'}], multi: true};
-    TestBed.overrideProvider(MY_TOKEN, multiOverride as any);
+    TestBed.overrideProvider(MY_TOKEN, multiOverride);
 
     const fixture = TestBed.createComponent(MyComp);
     expect(fixture.componentInstance.myProviders).toEqual([{value: 'new provider'}]);
@@ -1852,6 +1852,60 @@ describe('TestBed', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     expect(fixture!.nativeElement.textContent).toContain('changed');
+  });
+
+  describe('TestBed.inject', () => {
+    describe('injection flags', () => {
+      it('should be able to optionally inject a token', () => {
+        const TOKEN = new InjectionToken<string>('TOKEN');
+
+        expect(TestBed.inject(TOKEN, undefined, {optional: true})).toBeNull();
+        expect(TestBed.inject(TOKEN, undefined, InjectFlags.Optional)).toBeNull();
+
+        expect(TestBed.inject(TOKEN, undefined, {optional: true})).toBeNull();
+        expect(TestBed.inject(TOKEN, undefined, InjectFlags.Optional)).toBeNull();
+      });
+
+      it('should include `null` into the result type when the optional flag is used', () => {
+        const TOKEN = new InjectionToken<string>('TOKEN');
+
+        const flags: InjectOptions = {optional: true};
+        let result = TestBed.inject(TOKEN, undefined, flags);
+        expect(result).toBe(null);
+
+        // Verify that `null` can be a valid value (from typing standpoint),
+        // the line below would fail a type check in case the result doesn't
+        // have `null` in the type.
+        result = null;
+      });
+
+      it('should be able to use skipSelf injection', () => {
+        const TOKEN = new InjectionToken<string>('TOKEN');
+        TestBed.configureTestingModule({
+          providers: [{provide: TOKEN, useValue: 'from TestBed'}],
+        });
+
+        expect(TestBed.inject(TOKEN)).toBe('from TestBed');
+
+        expect(TestBed.inject(TOKEN, undefined, {skipSelf: true, optional: true})).toBeNull();
+        expect(TestBed.inject(TOKEN, undefined, InjectFlags.SkipSelf | InjectFlags.Optional))
+            .toBeNull();
+      });
+    });
+  });
+
+  it('should be able to call Testbed.runInInjectionContext in tests', () => {
+    const expectedValue = 'testValue';
+    @Injectable({providedIn: 'root'})
+    class SomeInjectable {
+      readonly instanceValue = expectedValue;
+    }
+
+    function functionThatUsesInject(): string {
+      return inject(SomeInjectable).instanceValue;
+    }
+
+    expect(TestBed.runInInjectionContext(functionThatUsesInject)).toEqual(expectedValue);
   });
 });
 
